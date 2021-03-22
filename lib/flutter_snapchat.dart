@@ -4,8 +4,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 class FlutterSnapchat {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_snapchat');
+  static const MethodChannel _channel = const MethodChannel('flutter_snapchat');
 
   // ignore: close_sinks
   StreamController<SnapchatUser> _authStatusController;
@@ -13,10 +12,12 @@ class FlutterSnapchat {
 
   SnapchatAuthStateListener authStateListener;
 
-  FlutterSnapchat() {
+  FlutterSnapchat({SnapchatAuthStateListener authStateListener}) {
     this._authStatusController = StreamController<SnapchatUser>();
     this.onAuthStateChanged = _authStatusController.stream;
     this._authStatusController.add(null);
+
+    addAuthStateListener(authStateListener);
 
     this.currentUser.then((user) {
       this._authStatusController.add(user);
@@ -39,7 +40,7 @@ class FlutterSnapchat {
   /// Opens Snapchat oauth screen in app (if installed) or in a browser
   /// Returns snapchat user or throws error if it fails
   Future<SnapchatUser> login() async {
-    await _channel.invokeMethod('callLogin');
+    await _channel.invokeMethod('login');
     final currentUser = await this.currentUser;
     this._authStatusController.add(currentUser);
     this.authStateListener.onLogin(currentUser);
@@ -49,13 +50,13 @@ class FlutterSnapchat {
   /// Close auth status listener, clears local session tokens
   /// Calling current user after logging out will result in an error
   Future<void> logout() async {
-    await _channel.invokeMethod('callLogout');
+    await _channel.invokeMethod('logout');
     this._authStatusController.add(null);
     this.authStateListener.onLogout();
     this._authStatusController.close();
   }
 
-  /// Returns `SnapchatUser`
+  /// Returns [SnapchatUser]
   /// Calling current user after logging out will result in an error
   Future<SnapchatUser> get currentUser async {
     try {
@@ -79,13 +80,12 @@ class FlutterSnapchat {
     assert(
     mediaType != null && (caption != null ? caption.length <= 250 : true));
     if (mediaType != SnapchatMediaType.none) assert(mediaUrl != null);
-    await _channel.invokeMethod('sendMedia', <String, dynamic>{
-      'mediaType':
-      mediaType.toString().substring(mediaType.toString().indexOf('.') + 1),
+    await _channel.invokeMethod('send', <String, dynamic>{
+      'mediaType': mediaType.toString().substring(mediaType.toString().indexOf('.') + 1),
       'mediaUrl': mediaUrl,
       'sticker': sticker != null ? sticker.toMap() : null,
       'caption': caption,
-      'attachmentUrl': attachmentUrl
+      'attachment': attachmentUrl
     });
   }
 
@@ -108,6 +108,11 @@ class SnapchatUser {
   final String bitmojiUrl;
 
   SnapchatUser(this.externalId, this.displayName, this.bitmojiUrl);
+
+  @override
+  String toString() {
+    return 'SnapchatUser (externalId: $externalId, displayName: $displayName, bitmojiUrl: $bitmojiUrl)';
+  }
 }
 
 class SnapchatSticker {
@@ -123,8 +128,8 @@ class SnapchatSticker {
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      "imageUrl": this.imageUrl,
-      "animated": this.isAnimated
+      'imageUrl': this.imageUrl,
+      'animated': this.isAnimated
     };
   }
 }

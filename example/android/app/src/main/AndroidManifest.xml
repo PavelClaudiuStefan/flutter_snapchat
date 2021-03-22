@@ -3,12 +3,12 @@
 
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="flutter_snapchat_example"
+        android:label="flutter_snapchat"
         android:icon="@mipmap/ic_launcher">
 
         <meta-data
             android:name="com.snapchat.kit.sdk.clientId"
-            android:value="f468e074-a64b-40d8-9343-faf5f0136eee" />
+            android:value="9a412ba9-41b3-4937-9a1c-de681d62f4f9" />
 
         <meta-data
             android:name="com.snapchat.kit.sdk.redirectUrl"

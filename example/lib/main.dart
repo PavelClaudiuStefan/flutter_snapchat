@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_snapchat/flutter_snapchat.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(MaterialApp(home: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -25,6 +25,9 @@ class _MyAppState extends State<MyApp> implements SnapchatAuthStateListener {
   @override
   void initState() {
     super.initState();
+
+    _snapchat.addAuthStateListener(this);
+
     initPlatformState();
   }
 
@@ -49,10 +52,14 @@ class _MyAppState extends State<MyApp> implements SnapchatAuthStateListener {
   }
 
   Future<void> loginUser() async {
+    print(_snapchatUser.toString());
     try {
       bool installed = await _snapchat.isSnapchatInstalled;
       if (installed) {
-        await _snapchat.login();
+        final user = await _snapchat.login();
+        setState(() {
+          _snapchatUser = user;
+        });
       } else {
         _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Snapchat is not installed')));
       }
@@ -62,6 +69,8 @@ class _MyAppState extends State<MyApp> implements SnapchatAuthStateListener {
   }
 
   Future<void> logoutUser() async {
+    print(_snapchatUser.toString());
+
     try {
       await _snapchat.logout();
     } on PlatformException catch (exception) {
@@ -75,67 +84,65 @@ class _MyAppState extends State<MyApp> implements SnapchatAuthStateListener {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        home: Scaffold(
-          key: _scaffoldKey,
-          appBar: AppBar(
-            title: const Text('Flutter Snapchat Example App'),
-          ),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: const Text('Flutter Snapchat Example App'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_snapchatUser != null)
+              Container(
+                  width: 64,
+                  height: 64,
+                  margin: EdgeInsets.all(16),
+                  child: Image(
+                    image: NetworkImage(_snapchatUser.bitmojiUrl),
+                  )
+              ),
 
-                if (_snapchatUser != null)
-                  Container(
-                      width: 64,
-                      height: 64,
-                      margin: EdgeInsets.all(16),
-                      child: Image(
-                        image: NetworkImage(_snapchatUser.bitmojiUrl),
-                      )
-                ),
+            if (_snapchatUser != null) Text(_snapchatUser.displayName),
 
-                if (_snapchatUser != null) Text(_snapchatUser.displayName),
-
-                if (_snapchatUser != null) Text(
-                      _snapchatUser.externalId,
-                      style: TextStyle(color: Colors.grey, fontSize: 9.0)
-                ),
-
-                Text('Running on: $_platformVersion\n'),
-
-                if (_snapchatUser == null) ElevatedButton(
-                      onPressed: () => loginUser(),
-                      child: Text('Login with Snapchat')
-                ),
-
-                if (_snapchatUser != null) TextButton(
-                    onPressed: () => logoutUser(), child: Text("Logout")
-                )
-              ],
+            if (_snapchatUser != null) Text(
+                _snapchatUser.externalId,
+                style: TextStyle(color: Colors.grey, fontSize: 9.0)
             ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              _snapchat.share(SnapchatMediaType.photo,
-                  mediaUrl:
-                  'https://picsum.photos/${this.context.size.width.floor()}/${this.context.size.height.floor()}.jpg',
-                  sticker: SnapchatSticker(
-                      'https://miro.medium.com/max/1000/1*ilC2Aqp5sZd1wi0CopD1Hw.png',
-                      false
-                  ),
-                  caption: "Flutter snapchat caption",
-                  attachmentUrl: "https://smaplo.com");
-            },
-            child: Icon(Icons.camera),
-          ),
-        )
+
+            Text('Running on: $_platformVersion\n'),
+
+            if (_snapchatUser == null) ElevatedButton(
+                onPressed: () => loginUser(),
+                child: Text('Login with Snapchat')
+            ),
+
+            if (_snapchatUser != null) TextButton(
+                onPressed: () => logoutUser(), child: Text("Logout")
+            )
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _snapchat.share(SnapchatMediaType.photo,
+              mediaUrl:
+              'https://picsum.photos/${this.context.size.width.floor()}/${this.context.size.height.floor()}.jpg',
+              // sticker: SnapchatSticker(
+              //     'https://miro.medium.com/max/1000/1*ilC2Aqp5sZd1wi0CopD1Hw.png',
+              //     false
+              // ),
+              caption: "Flutter snapchat caption",
+              attachmentUrl: "https://smaplo.com");
+        },
+        child: Icon(Icons.camera),
+      ),
     );
   }
 
   @override
   void onLogin(SnapchatUser user) {
+    print('on login: user: ${user.toString()}');
     setState(() {
       _snapchatUser = user;
     });
