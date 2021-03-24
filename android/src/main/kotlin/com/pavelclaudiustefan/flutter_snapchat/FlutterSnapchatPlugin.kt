@@ -29,7 +29,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
-import java.net.URI
 import java.util.*
 
 
@@ -45,6 +44,20 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   private var creativeApi: SnapCreativeKitApi? = null
   private var mediaFactory: SnapMediaFactory? = null
 
+  private var onLoginStateChangedListener = object: LoginStateController.OnLoginStateChangedListener {
+    override fun onLoginSucceeded() {
+      _result.success("Login success")
+    }
+
+    override fun onLoginFailed() {
+      _result.error("LoginError", "Error logging in", null)
+    }
+
+    override fun onLogout() {
+      _result.success("Logout success")
+    }
+  }
+
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_snapchat")
     channel.setMethodCallHandler(this)
@@ -53,22 +66,9 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when (call.method) {
       "login" -> {
-//        SnapLogin.getLoginStateController(_activity).addOnLoginStateChangedListener(this)
-        SnapLogin.getLoginStateController(_activity).addOnLoginStateChangedListener(object : LoginStateController.OnLoginStateChangedListener {
-          override fun onLoginSucceeded() {
-            _result.success("Login success")
-          }
-
-          override fun onLoginFailed() {
-            _result.error("LoginError", "Error logging in", null)
-          }
-
-          override fun onLogout() {
-            _result.success("Logout success")
-          }
-        })
-        SnapLogin.getAuthTokenManager(_activity).startTokenGrant()
         this._result = result
+        SnapLogin.getLoginStateController(_activity).addOnLoginStateChangedListener(onLoginStateChangedListener)
+        SnapLogin.getAuthTokenManager(_activity).startTokenGrant()
       }
       "getUser" -> {
         val query = "{me{externalId, displayName, bitmoji{selfie}}}"
@@ -99,8 +99,8 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         })
       }
       "logout" -> {
-        SnapLogin.getAuthTokenManager(_activity).clearToken()
         this._result = result
+        SnapLogin.getAuthTokenManager(_activity).clearToken()
       }
       "send" -> {
         initCreativeApi()
@@ -145,11 +145,12 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
             return
           }
 
-          if (stickerMap["width"] != null) sticker.setWidth((stickerMap["width"] as Double?)!!.toFloat())
-          if (stickerMap["height"] != null) sticker.setHeight((stickerMap["height"] as Double?)!!.toFloat())
+          if (stickerMap["width"] != null) sticker.setWidthDp((stickerMap["width"] as Double?)!!.toFloat())
+          if (stickerMap["height"] != null) sticker.setHeightDp((stickerMap["height"] as Double?)!!.toFloat())
           if (stickerMap["x"] != null) sticker.setPosX((stickerMap["x"] as Double?)!!.toFloat())
           if (stickerMap["y"] != null) sticker.setPosY((stickerMap["y"] as Double?)!!.toFloat())
           if (stickerMap["rotation"] != null) sticker.setRotationDegreesClockwise((stickerMap["rotation"] as Double?)!!.toFloat())
+
           content.snapSticker = sticker
         }
         creativeApi!!.send(content)
@@ -195,18 +196,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
   }
-
-//  override fun onLoginSucceeded() {
-//    this._result.success("Login Success")
-//  }
-//
-//  override fun onLoginFailed() {
-//    this._result.error("LoginError", "Error Logging In", null)
-//  }
-//
-//  override fun onLogout() {
-//    this._result.success("Logout Success")
-//  }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     _activity = binding.activity
