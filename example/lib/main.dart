@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_snapchat/flutter_snapchat.dart';
+import 'package:flutter_snapchat/bitmoji_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() {
@@ -151,6 +152,19 @@ class _MyAppState extends State<MyApp> {
         child: _isLoading ? CircularProgressIndicator() : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Center(
+                child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    width: 128.0,
+                    height: 320.0,
+                    child: BitmojiPicker(
+                      onBitmojiPickerCreated: (controller) {
+                        controller.showBitmojis();
+                      },
+                    )
+                )
+            ),
+
             if (_snapchatUser != null)
               Container(
                   width: 64,
@@ -226,7 +240,19 @@ class _MyAppState extends State<MyApp> {
   }
 
   void showBitmojis() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return TextButton(
+            onPressed: () {
+              _snapchat.showBitmojis();
+            },
+            child: Text('Bitmojis')
+        );
+      }
+    );
 
+    // _snapchat.showBitmojis();
   }
 
   Future<void> writeToFile(ByteData data, String path) {

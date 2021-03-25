@@ -41,12 +41,16 @@ class _BitmojiPickerState extends State<BitmojiPicker> {
 
 class BitmojiPickerController {
   BitmojiPickerController._(int id)
-      : _channel = new MethodChannel('plugins.felix.angelov/textview_$id');
+      : _channel = new MethodChannel('com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker_$id');
 
   final MethodChannel _channel;
 
-  Future<void> setQuery(String query) async {
-    assert(query != null);
-    return _channel.invokeMethod('setQuery', query);
+  Future<void> showBitmojis() async {
+    return _channel.invokeMethod('showBitmojis');
   }
+
+  // Future<void> setQuery(String query) async {
+  //   assert(query != null);
+  //   return _channel.invokeMethod('setQuery', query);
+  // }
 }

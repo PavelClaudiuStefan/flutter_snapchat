@@ -1,10 +1,17 @@
 package com.pavelclaudiustefan.flutter_snapchat
 
 import android.app.Activity
+import android.content.Context
 import android.os.Build
+import android.view.Gravity
+import android.widget.FrameLayout
 import androidx.annotation.NonNull
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
+import com.snapchat.client.BuildConfig
 import com.snapchat.kit.sdk.SnapCreative
 import com.snapchat.kit.sdk.SnapLogin
+import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragment
 import com.snapchat.kit.sdk.core.controller.LoginStateController
 import com.snapchat.kit.sdk.creative.api.SnapCreativeKitApi
 import com.snapchat.kit.sdk.creative.exceptions.SnapMediaSizeException
@@ -37,8 +44,8 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 
   private lateinit var channel : MethodChannel
 
-//  private lateinit var context: Context
   private lateinit var _activity: Activity
+  private lateinit var _context: Context
   private lateinit var _result: Result
 
   private var creativeApi: SnapCreativeKitApi? = null
@@ -59,6 +66,12 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    flutterPluginBinding
+            .platformViewRegistry
+            .registerViewFactory(
+                    "com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker",
+                    BitmojiPickerFactory(flutterPluginBinding.binaryMessenger))
+
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_snapchat")
     channel.setMethodCallHandler(this)
   }
@@ -156,6 +169,29 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         creativeApi!!.send(content)
       }
       "isInstalled" -> result.success(SnapUtils.isSnapchatInstalled(_activity.packageManager, "com.snapchat.android"))
+      "showBitmojis" -> {
+        val id = 0x123456
+//        val vParams: ViewGroup.LayoutParams = ViewGroup.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+//        )
+        val vParams = FrameLayout.LayoutParams(
+                _activity.window.decorView.width,  // Width in pixel
+                _activity.window.decorView.height / 2,  // Height in pixel
+                Gravity.BOTTOM
+        )
+
+        val container = FrameLayout(_activity)
+        container.layoutParams = vParams
+        container.id = id
+        _activity.addContentView(container, vParams)
+
+        container.context
+
+        val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+        fm.beginTransaction()
+                .replace(id, BitmojiFragment())
+                .commitAllowingStateLoss()
+      }
       "getPlatformVersion" -> result.success("Android " + Build.VERSION.RELEASE)
       else -> result.notImplemented()
     }
@@ -199,11 +235,15 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     _activity = binding.activity
+    _context = binding.activity.applicationContext
   }
 
   override fun onDetachedFromActivityForConfigChanges() {}
 
-  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
+  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    _activity = binding.activity
+    _context = binding.activity.applicationContext
+  }
 
   override fun onDetachedFromActivity() {}
 }

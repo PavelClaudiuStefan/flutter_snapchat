@@ -88,6 +88,10 @@ class FlutterSnapchat {
     isInstalled = await _channel.invokeMethod('isInstalled');
     return isInstalled;
   }
+
+  Future<void> showBitmojis() async {
+    await _channel.invokeMethod('showBitmojis');
+  }
 }
 
 class SnapchatUser {
