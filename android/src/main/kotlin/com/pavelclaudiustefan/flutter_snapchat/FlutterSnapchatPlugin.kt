@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.os.Build
 import android.view.Gravity
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.annotation.NonNull
 import androidx.fragment.app.FragmentActivity
@@ -169,32 +171,107 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         creativeApi!!.send(content)
       }
       "isInstalled" -> result.success(SnapUtils.isSnapchatInstalled(_activity.packageManager, "com.snapchat.android"))
-      "showBitmojis" -> {
+      "showBitmojisPicker" -> {
         val id = 0x123456
+
+        val topPadding = call.argument<Int>("topPadding")
+        val friendUserId: String? = call.argument("friendUserId")
+
 //        val vParams: ViewGroup.LayoutParams = ViewGroup.LayoutParams(
 //                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
 //        )
+
+        val bitmojiPickerWidth: Int = _activity.window.decorView.width
+        val bitmojiPickerHeight: Int = if (topPadding != null) {
+          _activity.window.decorView.height - topPadding
+        } else {
+          (_activity.window.decorView.height * 0.8).toInt()
+        }
+
         val vParams = FrameLayout.LayoutParams(
-                _activity.window.decorView.width,  // Width in pixel
-                _activity.window.decorView.height / 2,  // Height in pixel
+                bitmojiPickerWidth,  // Width in pixels
+                bitmojiPickerHeight,  // Height in pixels
                 Gravity.BOTTOM
         )
 
         val container = FrameLayout(_activity)
         container.layoutParams = vParams
         container.id = id
+
+//        val textView = TextView(_context)
+//        textView.text = "Loading..."
+//        container.addView(textView)
+
         _activity.addContentView(container, vParams)
 
-        container.context
+        val bitmojiFragment = BitmojiFragment.builder().withShowSearchBar(false).build()
+
+        bitmojiFragment.setOnBitmojiSelectedListener { s, _ ->
+          result.success(mapOf(
+                  Pair("type", "bitmoji_url"),
+                  Pair("url", s),
+          ))
+          val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+          fm.popBackStack()
+        }
+
+        if (!friendUserId.isNullOrBlank()) {
+          bitmojiFragment.setFriend(friendUserId)
+        }
+
+//        bitmojiFragment.setOnBitmojiSearchFocusChangeListener {
+//          if (it) {
+//            val toast = Toast(_context);
+//            toast.setText("Focused")
+//            Toast.makeText(_context, "", Toast.LENGTH_SHORT).show()
+//            container.requestFocusFromTouch()
+//            container.showSoftKeyboard()
+//          } else {
+//            container.hideSoftKeyboard()
+//          }
+//        }
 
         val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
         fm.beginTransaction()
-                .replace(id, BitmojiFragment())
+                .replace(id, bitmojiFragment)
+                .addToBackStack("BitmojiPicker")
                 .commitAllowingStateLoss()
+      }
+      "closeBitmojisPicker" -> {
+        val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+        fm.popBackStack()
+
+        result.success("Closed bitmoji picker")
       }
       "getPlatformVersion" -> result.success("Android " + Build.VERSION.RELEASE)
       else -> result.notImplemented()
     }
+  }
+
+  private fun View.showSoftKeyboard(force: Boolean = false) {
+    val inputMethodManager =
+            context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    if (force) {
+      inputMethodManager.toggleSoftInput(
+              InputMethodManager.SHOW_FORCED,
+              InputMethodManager.HIDE_IMPLICIT_ONLY
+      )
+    }
+
+    inputMethodManager.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+  }
+
+  private fun View.hideSoftKeyboard(force: Boolean = false) {
+    val inputMethodManager =
+            context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    if (force) {
+      inputMethodManager.toggleSoftInput(
+              InputMethodManager.SHOW_FORCED,
+              InputMethodManager.HIDE_IMPLICIT_ONLY
+      )
+    }
+    
+    inputMethodManager.hideSoftInputFromWindow(this.windowToken, InputMethodManager.HIDE_IMPLICIT_ONLY)
   }
 
   private fun initCreativeApi() {

@@ -89,8 +89,26 @@ class FlutterSnapchat {
     return isInstalled;
   }
 
-  Future<void> showBitmojis() async {
-    await _channel.invokeMethod('showBitmojis');
+  /// [topPadding] top padding in pixels
+  Future showBitmojisPicker(int topPadding, {String friendUserId}) async {
+    final result = await _channel.invokeMethod('showBitmojisPicker',
+        {
+          'topPadding': topPadding,
+          'friendUserId': friendUserId
+        }
+    );
+
+    // print('INFO (showBitmojisPicker) > result: ${result.toString()}');
+
+    return result;
+  }
+
+  Future closeBitmojisPicker() async {
+    final result = await _channel.invokeMethod('closeBitmojisPicker');
+
+    // print('INFO (closeBitmojisPicker) > result: ${result.toString()}');
+
+    return result;
   }
 }
 

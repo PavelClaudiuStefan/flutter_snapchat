@@ -5,7 +5,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_snapchat/flutter_snapchat.dart';
-import 'package:flutter_snapchat/bitmoji_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() {
@@ -27,7 +26,10 @@ class _MyAppState extends State<MyApp> {
   // FlutterSnapchat _snapchat = FlutterSnapchat(authStateListener: this);
   FlutterSnapchat _snapchat;
 
+  String _bitmojiUrl;
+
   bool _isLoading = true;
+  bool _isBitmojisPickerVisible = false;
 
   @override
   void initState() {
@@ -138,121 +140,153 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     // print('\nbuild - isLoading: $_isLoading, user: $_snapchatUser\n');
 
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text('Flutter Snapchat Example App'),
-        actions: [
-          IconButton(icon: Icon(Icons.image), onPressed: () {
-            showBitmojis();
-          })
-        ],
-      ),
-      body: Center(
-        child: _isLoading ? CircularProgressIndicator() : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Center(
-                child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
-                    width: 128.0,
-                    height: 320.0,
-                    child: BitmojiPicker(
-                      onBitmojiPickerCreated: (controller) {
-                        controller.showBitmojis();
-                      },
-                    )
-                )
-            ),
-
-            if (_snapchatUser != null)
-              Container(
-                  width: 64,
-                  height: 64,
-                  margin: EdgeInsets.all(16),
-                  child: Image(
-                    image: NetworkImage(_snapchatUser.bitmojiUrl),
-                  )
-              ),
-
-            if (_snapchatUser != null) Text(_snapchatUser.displayName),
-
-            if (_snapchatUser != null) Text(
-                _snapchatUser.externalId,
-                style: TextStyle(color: Colors.grey, fontSize: 9.0)
-            ),
-
-            Text('Running on: $_platformVersion\n'),
-
-            if (_snapchatUser == null) ElevatedButton(
-                onPressed: () => loginUser(),
-                child: Text('Login with Snapchat')
-            ),
-
-            if (_snapchatUser != null) TextButton(
-                onPressed: () => logoutUser(), child: Text("Logout")
-            )
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: const Text('Flutter Snapchat Example App'),
+          actions: [
+            IconButton(icon: Icon(Icons.image), onPressed: () {
+              showBitmojisPicker();
+            })
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          //read and write
-          final backgroundFilename = 'background_image.jpg';
-          final stickerFilename = 'sticker.png';
-          final String dir = (await getApplicationDocumentsDirectory()).path;
+        body: Center(
+          child: _isLoading ? CircularProgressIndicator() : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_bitmojiUrl?.isNotEmpty ?? false)
+                Container(
+                    width: 64,
+                    height: 64,
+                    margin: EdgeInsets.all(16),
+                    child: Image(
+                      image: NetworkImage(_bitmojiUrl),
+                    )
+                ),
 
+              if (_snapchatUser != null)
+                Container(
+                    width: 64,
+                    height: 64,
+                    margin: EdgeInsets.all(16),
+                    child: Image(
+                      image: NetworkImage(_snapchatUser.bitmojiUrl),
+                    )
+                ),
 
-          final String backgroundFilePath = '$dir/$backgroundFilename';
-          final String stickerFilePath = '$dir/$stickerFilename';
+              if (_snapchatUser != null) Text(_snapchatUser.displayName),
 
-          if (!(await File(backgroundFilePath).exists())) {
-            var bytes = await rootBundle.load("assets/images/$backgroundFilename");
-            await writeToFile(bytes, backgroundFilePath);
-          }
-
-          if (!(await File(stickerFilePath).exists())) {
-            var bytes = await rootBundle.load("assets/images/$stickerFilename");
-            await writeToFile(bytes, stickerFilePath);
-          }
-
-          _snapchat.share(SnapchatMediaType.photo,
-              mediaUrl: backgroundFilePath,
-              sticker: SnapchatSticker(
-                  stickerFilePath,
-                  false,
-                  width: 200,
-                  height: 200,
-                  x: 0.5,
-                  y: 0.5
+              if (_snapchatUser != null) Text(
+                  _snapchatUser.externalId,
+                  style: TextStyle(color: Colors.grey, fontSize: 9.0)
               ),
-              // mediaUrl: 'https://picsum.photos/${this.context.size.width.floor()}/${this.context.size.height.floor()}.jpg',
-              // sticker: SnapchatSticker(
-              //     'https://miro.medium.com/max/1000/1*ilC2Aqp5sZd1wi0CopD1Hw.png',
-              //     false
-              // ),
-              // caption: "Flutter snapchat caption",
-              attachmentUrl: "https://smaplo.com");
-        },
-        child: Icon(Icons.camera),
+
+              Text('Running on: $_platformVersion\n'),
+
+              if (_snapchatUser == null) ElevatedButton(
+                  onPressed: () => loginUser(),
+                  child: Text('Login with Snapchat')
+              ),
+
+              if (_snapchatUser != null) TextButton(
+                  onPressed: () => logoutUser(), child: Text("Logout")
+              )
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            //read and write
+            final backgroundFilename = 'background_image.jpg';
+            final stickerFilename = 'sticker.png';
+            final String dir = (await getApplicationDocumentsDirectory()).path;
+
+
+            final String backgroundFilePath = '$dir/$backgroundFilename';
+            final String stickerFilePath = '$dir/$stickerFilename';
+
+            if (!(await File(backgroundFilePath).exists())) {
+              var bytes = await rootBundle.load("assets/images/$backgroundFilename");
+              await writeToFile(bytes, backgroundFilePath);
+            }
+
+            if (!(await File(stickerFilePath).exists())) {
+              var bytes = await rootBundle.load("assets/images/$stickerFilename");
+              await writeToFile(bytes, stickerFilePath);
+            }
+
+            _snapchat.share(SnapchatMediaType.photo,
+                mediaUrl: backgroundFilePath,
+                sticker: SnapchatSticker(
+                    stickerFilePath,
+                    false,
+                    width: 200,
+                    height: 200,
+                    x: 0.5,
+                    y: 0.5
+                ),
+                // mediaUrl: 'https://picsum.photos/${this.context.size.width.floor()}/${this.context.size.height.floor()}.jpg',
+                // sticker: SnapchatSticker(
+                //     'https://miro.medium.com/max/1000/1*ilC2Aqp5sZd1wi0CopD1Hw.png',
+                //     false
+                // ),
+                // caption: "Flutter snapchat caption",
+                attachmentUrl: "https://smaplo.com");
+          },
+          child: Icon(Icons.camera),
+        ),
       ),
     );
   }
 
-  void showBitmojis() {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) {
-        return TextButton(
-            onPressed: () {
-              _snapchat.showBitmojis();
-            },
-            child: Text('Bitmojis')
-        );
-      }
-    );
+  void showBitmojisPicker() async {
+    _isBitmojisPickerVisible = true;
+    final int topPadding = ((MediaQuery.of(context).padding.top + kToolbarHeight) * MediaQuery.of(context).devicePixelRatio).toInt();
+    final result = await _snapchat.showBitmojisPicker(topPadding);
+    if (result['type'] == 'bitmoji_url') {
+      setState(() {
+        _bitmojiUrl = result['url'];
+      });
+    }
+    print('INFO (showBitmojisPicker) > result: ${result.toString()}');
+    _isBitmojisPickerVisible = false;
+  }
 
-    // _snapchat.showBitmojis();
+  /// Return true (after closing picker) if bitmoji picker is visible
+  /// Else return false if bitmoji picker is not visible
+  Future<bool> tryCloseBitmojisPicker() async {
+    if (_isBitmojisPickerVisible) {
+      final result = await _snapchat.closeBitmojisPicker();
+      print('INFO (closeBitmojisPicker) > result: ${result.toString()}');
+      _isBitmojisPickerVisible = false;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Future<bool> _onWillPop() async {
+    return !(await tryCloseBitmojisPicker());
+
+    return (await showDialog(
+      context: context,
+      builder: (context) => new AlertDialog(
+        title: new Text('Are you sure?'),
+        content: new Text('Do you want to exit an App'),
+        actions: <Widget>[
+          new FlatButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: new Text('No'),
+          ),
+          new FlatButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: new Text('Yes'),
+          ),
+        ],
+      ),
+    )) ?? false;
   }
 
   Future<void> writeToFile(ByteData data, String path) {

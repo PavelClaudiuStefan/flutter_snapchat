@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 typedef void BitmojiPickerCreatedCallback(BitmojiPickerController controller);
 
+@deprecated
 class BitmojiPicker extends StatefulWidget {
 
   const BitmojiPicker({
@@ -21,15 +22,29 @@ class _BitmojiPickerState extends State<BitmojiPicker> {
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      child: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
     if (defaultTargetPlatform == TargetPlatform.android) {
       return AndroidView(
         viewType: 'com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker',
         onPlatformViewCreated: _onPlatformViewCreated,
+
+      );
+    } else if(defaultTargetPlatform == TargetPlatform.iOS) {
+      return UiKitView(
+        viewType: 'com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker',
+        onPlatformViewCreated: _onPlatformViewCreated,
       );
     }
+
     return Text(
         '$defaultTargetPlatform is not yet supported by the snapchat plugin');
   }
+
 
   void _onPlatformViewCreated(int id) {
     if (widget.onBitmojiPickerCreated == null) {
@@ -46,7 +61,7 @@ class BitmojiPickerController {
   final MethodChannel _channel;
 
   Future<void> showBitmojis() async {
-    return _channel.invokeMethod('showBitmojis');
+    return _channel.invokeMethod('setupBitmojisPicker');
   }
 
   // Future<void> setQuery(String query) async {
