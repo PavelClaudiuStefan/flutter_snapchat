@@ -1,0 +1,58 @@
+PODS:
+  - Flutter (1.0.0)
+  - flutter_snapchat (0.0.1):
+    - Flutter
+    - SnapSDK
+  - path_provider (0.0.1):
+    - Flutter
+  - PINCache (3.0.3):
+    - PINCache/Arc-exception-safe (= 3.0.3)
+    - PINCache/Core (= 3.0.3)
+  - PINCache/Arc-exception-safe (3.0.3):
+    - PINCache/Core
+  - PINCache/Core (3.0.3):
+    - PINOperation (~> 1.2.1)
+  - PINOperation (1.2.1)
+  - SnapSDK (1.6.8):
+    - SnapSDK/SCSDKBitmojiKit (= 1.6.8)
+    - SnapSDK/SCSDKCreativeKit (= 1.6.8)
+    - SnapSDK/SCSDKLoginKit (= 1.6.8)
+    - SnapSDK/SCSDKStoryKit (= 1.6.8)
+  - SnapSDK/SCSDKBitmojiKit (1.6.8):
+    - PINCache (< 3.1, >= 2.3)
+    - PINOperation (~> 1.2)
+  - SnapSDK/SCSDKCreativeKit (1.6.8)
+  - SnapSDK/SCSDKLoginKit (1.6.8)
+  - SnapSDK/SCSDKStoryKit (1.6.8)
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - flutter_snapchat (from `.symlinks/plugins/flutter_snapchat/ios`)
+  - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - SnapSDK
+
+SPEC REPOS:
+  trunk:
+    - PINCache
+    - PINOperation
+    - SnapSDK
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  flutter_snapchat:
+    :path: ".symlinks/plugins/flutter_snapchat/ios"
+  path_provider:
+    :path: ".symlinks/plugins/path_provider/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  flutter_snapchat: c1fe8d4ba73038755a0e66861250503ec1cd2ba2
+  path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
+  PINCache: 7a8fc1a691173d21dbddbf86cd515de6efa55086
+  PINOperation: 00c935935f1e8cf0d1e2d6b542e75b88fc3e5e20
+  SnapSDK: 29513fd65172495391394a0999a0388dd136078a
+
+PODFILE CHECKSUM: 82126063c76295b1b6ce63f4b3b9359855157d09
+
+COCOAPODS: 1.10.1

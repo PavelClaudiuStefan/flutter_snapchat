@@ -153,7 +153,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
             error("Sticker path is null")
           }
           val sticker: SnapSticker = try {
-//            mediaFactory!!.getSnapStickerFromFile(File(stickerPath!!))
             mediaFactory!!.getSnapStickerFromFile(File(stickerPath))
           } catch (e: SnapStickerSizeException) {
             _result.error("400", e.message, null)

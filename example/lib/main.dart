@@ -23,7 +23,6 @@ class _MyAppState extends State<MyApp> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
 
   SnapchatUser _snapchatUser;
-  // FlutterSnapchat _snapchat = FlutterSnapchat(authStateListener: this);
   FlutterSnapchat _snapchat;
 
   String _bitmojiUrl;
@@ -35,22 +34,17 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
 
-    // print('\n\n\ninitState\n\n\n');
-
-    // _snapchat.addAuthStateListener(this);
-
-    // _snapchat = FlutterSnapchat(authStateListener: this);
     _snapchat = FlutterSnapchat(
-      onLogin: (user) {
-        setState(() {
-          _snapchatUser = user;
-        });
-      },
-      onLogout: () {
-        setState(() {
-          _snapchatUser = null;
-        });
-      }
+        onLogin: (user) {
+          setState(() {
+            _snapchatUser = user;
+          });
+        },
+        onLogout: () {
+          setState(() {
+            _snapchatUser = null;
+          });
+        }
     );
 
     initSnapchatUser();
@@ -98,19 +92,14 @@ class _MyAppState extends State<MyApp> {
       _isLoading = true;
     });
 
-    // print('\nloginUser - Started\n');
     try {
       bool installed = await _snapchat.isSnapchatInstalled;
-      // print('\nloginUser - installed: $installed\n');
       if (installed) {
-        // print('\nloginUser - Requested user\n');
         final user = await _snapchat.login();
-        // print('\nloginUser - Received user: ${user.toString()}\n');
         setState(() {
           _snapchatUser = user;
           _isLoading = false;
         });
-        // print('\nloginUser - Updated user state\n');
       } else {
         _scaffoldKey.currentState.showSnackBar(SnackBar(content: Text('Snapchat is not installed')));
       }
@@ -138,8 +127,6 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // print('\nbuild - isLoading: $_isLoading, user: $_snapchatUser\n');
-
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -147,8 +134,11 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Flutter Snapchat Example App'),
           actions: [
-            IconButton(icon: Icon(Icons.image), onPressed: () {
+            if (!_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.image), onPressed: () {
               showBitmojisPicker();
+            }),
+            if (_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.search), onPressed: () {
+              _snapchat.setBitmojiPickerQuery('haha');
             })
           ],
         ),
@@ -198,42 +188,46 @@ class _MyAppState extends State<MyApp> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
+            print('\n\nINFO (build) > step 1\n\n');
             //read and write
             final backgroundFilename = 'background_image.jpg';
             final stickerFilename = 'sticker.png';
             final String dir = (await getApplicationDocumentsDirectory()).path;
 
-
             final String backgroundFilePath = '$dir/$backgroundFilename';
             final String stickerFilePath = '$dir/$stickerFilename';
 
+            print('\n\nINFO (build) > step 2\n\n');
+
             if (!(await File(backgroundFilePath).exists())) {
+              print('\n\nINFO (build) > background not saved\n\n');
               var bytes = await rootBundle.load("assets/images/$backgroundFilename");
               await writeToFile(bytes, backgroundFilePath);
             }
 
+            print('\n\nINFO (build) > step 3\n\n');
+
             if (!(await File(stickerFilePath).exists())) {
+              print('\n\nINFO (build) > sticker not saved\n\n');
               var bytes = await rootBundle.load("assets/images/$stickerFilename");
               await writeToFile(bytes, stickerFilePath);
             }
 
+            print('\n\nINFO (build) > snapchat share\n\n');
+
             _snapchat.share(SnapchatMediaType.photo,
                 mediaUrl: backgroundFilePath,
-                sticker: SnapchatSticker(
-                    stickerFilePath,
-                    false,
-                    width: 200,
-                    height: 200,
-                    x: 0.5,
-                    y: 0.5
-                ),
-                // mediaUrl: 'https://picsum.photos/${this.context.size.width.floor()}/${this.context.size.height.floor()}.jpg',
+                // mediaUrl: 'https://picsum.photos/1080/1920',
                 // sticker: SnapchatSticker(
-                //     'https://miro.medium.com/max/1000/1*ilC2Aqp5sZd1wi0CopD1Hw.png',
-                //     false
+                //     stickerFilePath,
+                //     false,
+                //     width: 200,
+                //     height: 200,
+                //     x: 0.5,
+                //     y: 0.5
                 // ),
-                // caption: "Flutter snapchat caption",
-                attachmentUrl: "https://smaplo.com");
+                attachmentUrl: "https://example.com"
+            );
           },
           child: Icon(Icons.camera),
         ),
@@ -242,7 +236,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   void showBitmojisPicker() async {
-    _isBitmojisPickerVisible = true;
+    setState(() {
+      _isBitmojisPickerVisible = true;
+    });
     final int topPadding = ((MediaQuery.of(context).padding.top + kToolbarHeight) * MediaQuery.of(context).devicePixelRatio).toInt();
     final result = await _snapchat.showBitmojisPicker(topPadding);
     if (result['type'] == 'bitmoji_url') {
@@ -251,7 +247,9 @@ class _MyAppState extends State<MyApp> {
       });
     }
     print('INFO (showBitmojisPicker) > result: ${result.toString()}');
-    _isBitmojisPickerVisible = false;
+    setState(() {
+      _isBitmojisPickerVisible = false;
+    });
   }
 
   /// Return true (after closing picker) if bitmoji picker is visible
@@ -260,7 +258,9 @@ class _MyAppState extends State<MyApp> {
     if (_isBitmojisPickerVisible) {
       final result = await _snapchat.closeBitmojisPicker();
       print('INFO (closeBitmojisPicker) > result: ${result.toString()}');
-      _isBitmojisPickerVisible = false;
+      setState(() {
+        _isBitmojisPickerVisible = false;
+      });
       return true;
     } else {
       return false;
@@ -269,28 +269,10 @@ class _MyAppState extends State<MyApp> {
 
   Future<bool> _onWillPop() async {
     return !(await tryCloseBitmojisPicker());
-
-    return (await showDialog(
-      context: context,
-      builder: (context) => new AlertDialog(
-        title: new Text('Are you sure?'),
-        content: new Text('Do you want to exit an App'),
-        actions: <Widget>[
-          new FlatButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: new Text('No'),
-          ),
-          new FlatButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: new Text('Yes'),
-          ),
-        ],
-      ),
-    )) ?? false;
   }
 
   Future<void> writeToFile(ByteData data, String path) {
     final buffer = data.buffer;
-    return new File(path).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    return File(path).writeAsBytes(buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
   }
 }

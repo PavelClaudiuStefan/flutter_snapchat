@@ -64,7 +64,6 @@ class FlutterSnapchat {
     }
   }
 
-  /// TODO
   Future<void> share(SnapchatMediaType mediaType,
       {String mediaUrl,
         SnapchatSticker sticker,
@@ -73,13 +72,14 @@ class FlutterSnapchat {
     assert(
     mediaType != null && (caption != null ? caption.length <= 250 : true));
     if (mediaType != SnapchatMediaType.none) assert(mediaUrl != null);
-    await _channel.invokeMethod('send', <String, dynamic>{
+    final result = await _channel.invokeMethod('send', <String, dynamic>{
       'mediaType': mediaType.toString().substring(mediaType.toString().indexOf('.') + 1),
       'mediaUrl': mediaUrl,
       'sticker': sticker != null ? sticker.toMap() : null,
       'caption': caption,
       'attachment': attachmentUrl
     });
+    print('INFO (share) > result: ${result.toString()}');
   }
 
   /// Returns true if the Snapchat app is installed
@@ -98,17 +98,23 @@ class FlutterSnapchat {
         }
     );
 
-    // print('INFO (showBitmojisPicker) > result: ${result.toString()}');
-
     return result;
   }
 
   Future closeBitmojisPicker() async {
     final result = await _channel.invokeMethod('closeBitmojisPicker');
-
-    // print('INFO (closeBitmojisPicker) > result: ${result.toString()}');
-
     return result;
+  }
+
+  Future setBitmojiPickerQuery(String query) async {
+    try {
+      final result = await _channel.invokeMethod('setBitmojiPickerQuery', {
+        'query': query
+      });
+      print('INFO (setBitmojiPickerQuery) > ${result.toString()}');
+    } catch (e) {
+      print('ERROR (setBitmojiPickerQuery) > ${e.toString()}');
+    }
   }
 }
 
