@@ -217,17 +217,16 @@ class _MyAppState extends State<MyApp> {
 
             _snapchat.share(SnapchatMediaType.photo,
                 mediaUrl: backgroundFilePath,
-                // mediaUrl: 'https://picsum.photos/1080/1920',
-                // sticker: SnapchatSticker(
-                //     stickerFilePath,
-                //     false,
-                //     width: 200,
-                //     height: 200,
-                //     x: 0.5,
-                //     y: 0.5
-                // ),
+                sticker: SnapchatSticker(
+                    stickerFilePath,
+                    false,
+                    width: 200,
+                    height: 200,
+                    x: 0.5,
+                    y: 0.5
+                ),
                 attachmentUrl: "https://example.com"
-            );
+                );
           },
           child: Icon(Icons.camera),
         ),
@@ -235,6 +234,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+  /// Opens a bitmoji picker
   void showBitmojisPicker() async {
     setState(() {
       _isBitmojisPickerVisible = true;

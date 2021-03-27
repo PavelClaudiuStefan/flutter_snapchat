@@ -64,6 +64,7 @@ class FlutterSnapchat {
     }
   }
 
+  /// Share photo/video/live camera content
   Future<void> share(SnapchatMediaType mediaType,
       {String mediaUrl,
         SnapchatSticker sticker,
@@ -89,7 +90,8 @@ class FlutterSnapchat {
     return isInstalled;
   }
 
-  /// [topPadding] top padding in pixels
+  /// [topPadding] is top padding in pixels
+  /// [friendUserId] is the id of a user also connected with snapchat
   Future showBitmojisPicker(int topPadding, {String friendUserId}) async {
     final result = await _channel.invokeMethod('showBitmojisPicker',
         {

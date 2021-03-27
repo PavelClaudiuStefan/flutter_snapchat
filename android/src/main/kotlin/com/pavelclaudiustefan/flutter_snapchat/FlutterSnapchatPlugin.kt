@@ -14,6 +14,7 @@ import com.snapchat.client.BuildConfig
 import com.snapchat.kit.sdk.SnapCreative
 import com.snapchat.kit.sdk.SnapLogin
 import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragment
+import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragmentSearchMode
 import com.snapchat.kit.sdk.core.controller.LoginStateController
 import com.snapchat.kit.sdk.creative.api.SnapCreativeKitApi
 import com.snapchat.kit.sdk.creative.exceptions.SnapMediaSizeException
@@ -52,6 +53,8 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 
   private var creativeApi: SnapCreativeKitApi? = null
   private var mediaFactory: SnapMediaFactory? = null
+
+  private var bitmojiFragment: BitmojiFragment? = null
 
   private var onLoginStateChangedListener = object: LoginStateController.OnLoginStateChangedListener {
     override fun onLoginSucceeded() {
@@ -203,20 +206,21 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 
         _activity.addContentView(container, vParams)
 
-        val bitmojiFragment = BitmojiFragment.builder().withShowSearchBar(false).build()
+        if (bitmojiFragment == null) {
+          bitmojiFragment = BitmojiFragment.builder().withShowSearchBar(false).build()
 
-        bitmojiFragment.setOnBitmojiSelectedListener { s, _ ->
-          result.success(mapOf(
-                  Pair("type", "bitmoji_url"),
-                  Pair("url", s),
-          ))
-          val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
-          fm.popBackStack()
-        }
+          bitmojiFragment!!.setOnBitmojiSelectedListener { s, _ ->
+            result.success(mapOf(
+                    Pair("type", "bitmoji_url"),
+                    Pair("url", s),
+            ))
+            val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+            fm.popBackStack()
+          }
 
-        if (!friendUserId.isNullOrBlank()) {
-          bitmojiFragment.setFriend(friendUserId)
-        }
+          if (!friendUserId.isNullOrBlank()) {
+            bitmojiFragment!!.setFriend(friendUserId)
+          }
 
 //        bitmojiFragment.setOnBitmojiSearchFocusChangeListener {
 //          if (it) {
@@ -229,18 +233,28 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 //            container.hideSoftKeyboard()
 //          }
 //        }
+        }
 
         val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
         fm.beginTransaction()
-                .replace(id, bitmojiFragment)
+                .replace(id, bitmojiFragment!!)
                 .addToBackStack("BitmojiPicker")
                 .commitAllowingStateLoss()
       }
       "closeBitmojisPicker" -> {
+        bitmojiFragment = null
         val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
         fm.popBackStack()
 
         result.success("Closed bitmoji picker")
+      }
+      "setBitmojiPickerQuery" -> {
+        if (bitmojiFragment != null) {
+          bitmojiFragment!!.setSearchText(call.argument("query"), BitmojiFragmentSearchMode.SEARCH_RESULT_ONLY)
+          result.success("Search text updated")
+        } else {
+          result.error("BitmojiNotInitialized", "Bitmoji picker is not open", null)
+        }
       }
       "getPlatformVersion" -> result.success("Android " + Build.VERSION.RELEASE)
       else -> result.notImplemented()
