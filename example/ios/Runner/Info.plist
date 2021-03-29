@@ -69,5 +69,9 @@
         <string>https://auth.snapchat.com/oauth2/api/user.display_name</string>
         <string>https://auth.snapchat.com/oauth2/api/user.bitmoji.avatar</string>
     </array>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>UIFileSharingEnabled</key>
+    <true/>
 </dict>
 </plist>

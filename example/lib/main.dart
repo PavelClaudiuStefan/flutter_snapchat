@@ -135,7 +135,7 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Flutter Snapchat Example App'),
           actions: [
             if (!_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.image), onPressed: () {
-              showBitmojisPicker();
+              showBitmojiPicker();
             }),
             if (_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.search), onPressed: () {
               _snapchat.setBitmojiPickerQuery('haha');
@@ -143,52 +143,53 @@ class _MyAppState extends State<MyApp> {
           ],
         ),
         body: Center(
-          child: _isLoading ? CircularProgressIndicator() : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (_bitmojiUrl?.isNotEmpty ?? false)
-                Container(
-                    width: 64,
-                    height: 64,
-                    margin: EdgeInsets.all(16),
-                    child: Image(
-                      image: NetworkImage(_bitmojiUrl),
-                    )
+          child: _isLoading ? CircularProgressIndicator() : SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_bitmojiUrl?.isNotEmpty ?? false)
+                  Container(
+                      width: 64,
+                      height: 64,
+                      margin: EdgeInsets.all(16),
+                      child: Image(
+                        image: NetworkImage(_bitmojiUrl),
+                      )
+                  ),
+
+                if (_snapchatUser != null)
+                  Container(
+                      width: 64,
+                      height: 64,
+                      margin: EdgeInsets.all(16),
+                      child: Image(
+                        image: NetworkImage(_snapchatUser.bitmojiUrl),
+                      )
+                  ),
+
+                if (_snapchatUser != null) Text(_snapchatUser.displayName),
+
+                if (_snapchatUser != null) Text(
+                    _snapchatUser.externalId,
+                    style: TextStyle(color: Colors.grey, fontSize: 9.0)
                 ),
 
-              if (_snapchatUser != null)
-                Container(
-                    width: 64,
-                    height: 64,
-                    margin: EdgeInsets.all(16),
-                    child: Image(
-                      image: NetworkImage(_snapchatUser.bitmojiUrl),
-                    )
+                Text('Running on: $_platformVersion\n'),
+
+                if (_snapchatUser == null) ElevatedButton(
+                    onPressed: () => loginUser(),
+                    child: Text('Login with Snapchat')
                 ),
 
-              if (_snapchatUser != null) Text(_snapchatUser.displayName),
-
-              if (_snapchatUser != null) Text(
-                  _snapchatUser.externalId,
-                  style: TextStyle(color: Colors.grey, fontSize: 9.0)
-              ),
-
-              Text('Running on: $_platformVersion\n'),
-
-              if (_snapchatUser == null) ElevatedButton(
-                  onPressed: () => loginUser(),
-                  child: Text('Login with Snapchat')
-              ),
-
-              if (_snapchatUser != null) TextButton(
-                  onPressed: () => logoutUser(), child: Text("Logout")
-              )
-            ],
+                if (_snapchatUser != null) TextButton(
+                    onPressed: () => logoutUser(), child: Text("Logout")
+                )
+              ],
+            ),
           ),
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            print('\n\nINFO (build) > step 1\n\n');
             //read and write
             final backgroundFilename = 'background_image.jpg';
             final stickerFilename = 'sticker.png';
@@ -197,36 +198,30 @@ class _MyAppState extends State<MyApp> {
             final String backgroundFilePath = '$dir/$backgroundFilename';
             final String stickerFilePath = '$dir/$stickerFilename';
 
-            print('\n\nINFO (build) > step 2\n\n');
-
             if (!(await File(backgroundFilePath).exists())) {
-              print('\n\nINFO (build) > background not saved\n\n');
               var bytes = await rootBundle.load("assets/images/$backgroundFilename");
               await writeToFile(bytes, backgroundFilePath);
             }
 
-            print('\n\nINFO (build) > step 3\n\n');
-
             if (!(await File(stickerFilePath).exists())) {
-              print('\n\nINFO (build) > sticker not saved\n\n');
               var bytes = await rootBundle.load("assets/images/$stickerFilename");
               await writeToFile(bytes, stickerFilePath);
             }
 
-            print('\n\nINFO (build) > snapchat share\n\n');
-
-            _snapchat.share(SnapchatMediaType.photo,
+            final result = await _snapchat.share(SnapchatMediaType.photo,
                 mediaUrl: backgroundFilePath,
                 sticker: SnapchatSticker(
                     stickerFilePath,
                     false,
-                    width: 200,
-                    height: 200,
+                    width: 128,
+                    height: 128,
                     x: 0.5,
                     y: 0.5
                 ),
                 attachmentUrl: "https://example.com"
-                );
+            );
+
+            print('INFO (build) > result: ${result.toString()}');
           },
           child: Icon(Icons.camera),
         ),
@@ -235,18 +230,18 @@ class _MyAppState extends State<MyApp> {
   }
 
   /// Opens a bitmoji picker
-  void showBitmojisPicker() async {
+  void showBitmojiPicker() async {
     setState(() {
       _isBitmojisPickerVisible = true;
     });
     final int topPadding = ((MediaQuery.of(context).padding.top + kToolbarHeight) * MediaQuery.of(context).devicePixelRatio).toInt();
-    final result = await _snapchat.showBitmojisPicker(topPadding);
-    if (result['type'] == 'bitmoji_url') {
+    final result = await _snapchat.showBitmojiPicker(topPadding);
+    print('INFO (showBitmojiPicker) > type: ${result.runtimeType}, result: ${result.toString()}');
+    if (result is Map && result['type'] == 'bitmoji_url') {
       setState(() {
         _bitmojiUrl = result['url'];
       });
     }
-    print('INFO (showBitmojisPicker) > result: ${result.toString()}');
     setState(() {
       _isBitmojisPickerVisible = false;
     });
@@ -256,7 +251,7 @@ class _MyAppState extends State<MyApp> {
   /// Else return false if bitmoji picker is not visible
   Future<bool> tryCloseBitmojisPicker() async {
     if (_isBitmojisPickerVisible) {
-      final result = await _snapchat.closeBitmojisPicker();
+      final result = await _snapchat.closeBitmojiPicker();
       print('INFO (closeBitmojisPicker) > result: ${result.toString()}');
       setState(() {
         _isBitmojisPickerVisible = false;

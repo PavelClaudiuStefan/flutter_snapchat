@@ -173,7 +173,7 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         creativeApi!!.send(content)
       }
       "isInstalled" -> result.success(SnapUtils.isSnapchatInstalled(_activity.packageManager, "com.snapchat.android"))
-      "showBitmojisPicker" -> {
+      "showBitmojiPicker" -> {
         val id = 0x123456
 
         val topPadding = call.argument<Int>("topPadding")
@@ -241,7 +241,7 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
                 .addToBackStack("BitmojiPicker")
                 .commitAllowingStateLoss()
       }
-      "closeBitmojisPicker" -> {
+      "closeBitmojiPicker" -> {
         bitmojiFragment = null
         val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
         fm.popBackStack()

@@ -65,22 +65,28 @@ class FlutterSnapchat {
   }
 
   /// Share photo/video/live camera content
-  Future<void> share(SnapchatMediaType mediaType,
+  Future share(SnapchatMediaType mediaType,
       {String mediaUrl,
         SnapchatSticker sticker,
         String caption,
         String attachmentUrl}) async {
-    assert(
-    mediaType != null && (caption != null ? caption.length <= 250 : true));
+    assert(mediaType != null && (caption != null ? caption.length <= 250 : true));
+
     if (mediaType != SnapchatMediaType.none) assert(mediaUrl != null);
-    final result = await _channel.invokeMethod('send', <String, dynamic>{
-      'mediaType': mediaType.toString().substring(mediaType.toString().indexOf('.') + 1),
-      'mediaUrl': mediaUrl,
-      'sticker': sticker != null ? sticker.toMap() : null,
-      'caption': caption,
-      'attachment': attachmentUrl
-    });
-    print('INFO (share) > result: ${result.toString()}');
+
+    try {
+      final result = await _channel.invokeMethod('send', <String, dynamic>{
+        'mediaType': mediaType.toString().substring(mediaType.toString().indexOf('.') + 1),
+        'mediaUrl': mediaUrl,
+        'sticker': sticker != null ? sticker.toMap() : null,
+        'caption': caption,
+        'attachment': attachmentUrl
+      });
+
+      return result;
+    } catch (e) {
+      return e;
+    }
   }
 
   /// Returns true if the Snapchat app is installed
@@ -92,20 +98,29 @@ class FlutterSnapchat {
 
   /// [topPadding] is top padding in pixels
   /// [friendUserId] is the id of a user also connected with snapchat
-  Future showBitmojisPicker(int topPadding, {String friendUserId}) async {
-    final result = await _channel.invokeMethod('showBitmojisPicker',
-        {
-          'topPadding': topPadding,
-          'friendUserId': friendUserId
-        }
-    );
+  Future showBitmojiPicker(int topPadding, {String friendUserId}) async {
+    try {
+      final result = await _channel.invokeMethod('showBitmojiPicker',
+          {
+            'topPadding': topPadding,
+            'friendUserId': friendUserId,
+            'isDarkTheme': true
+          }
+      );
 
-    return result;
+      return result;
+    } catch (e) {
+      return e;
+    }
   }
 
-  Future closeBitmojisPicker() async {
-    final result = await _channel.invokeMethod('closeBitmojisPicker');
-    return result;
+  Future closeBitmojiPicker() async {
+    try {
+      final result = await _channel.invokeMethod('closeBitmojiPicker');
+      return result;
+    } catch (e) {
+      return e;
+    }
   }
 
   Future setBitmojiPickerQuery(String query) async {
@@ -114,8 +129,11 @@ class FlutterSnapchat {
         'query': query
       });
       print('INFO (setBitmojiPickerQuery) > ${result.toString()}');
+      return result;
+
     } catch (e) {
       print('ERROR (setBitmojiPickerQuery) > ${e.toString()}');
+      return e;
     }
   }
 }
