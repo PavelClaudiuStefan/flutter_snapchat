@@ -138,7 +138,7 @@ class _MyAppState extends State<MyApp> {
               showBitmojiPicker();
             }),
             if (_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.search), onPressed: () {
-              _snapchat.setBitmojiPickerQuery('haha');
+              _snapchat.setBitmojiPickerQuery('test');
             })
           ],
         ),
@@ -231,9 +231,22 @@ class _MyAppState extends State<MyApp> {
 
   /// Opens a bitmoji picker
   void showBitmojiPicker() async {
+    if (Platform.isAndroid) {
+      _showAndroidBitmojiPicker();
+
+    } else if (Platform.isIOS) {
+      _showIOSBitmojiPicker();
+
+    } else {
+      throw UnimplementedError('Bitmoji picker is only implemented for Android and iOS');
+    }
+  }
+
+  void _showAndroidBitmojiPicker() async {
     setState(() {
       _isBitmojisPickerVisible = true;
     });
+
     final int topPadding = ((MediaQuery.of(context).padding.top + kToolbarHeight) * MediaQuery.of(context).devicePixelRatio).toInt();
     final result = await _snapchat.showBitmojiPicker(topPadding);
     print('INFO (showBitmojiPicker) > type: ${result.runtimeType}, result: ${result.toString()}');
@@ -242,6 +255,33 @@ class _MyAppState extends State<MyApp> {
         _bitmojiUrl = result['url'];
       });
     }
+
+    setState(() {
+      _isBitmojisPickerVisible = false;
+    });
+  }
+
+  void _showIOSBitmojiPicker() async {
+    setState(() {
+      _isBitmojisPickerVisible = true;
+    });
+
+    // await showModalBottomSheet(
+    //     context: context,
+    //     builder: (ctx) => BitmojiPicker(onBitmojiPickerCreated: (controller) {
+    //       controller.setSearchText('test');
+    //     })
+    // );
+
+    final int topPadding = ((MediaQuery.of(context).padding.top + kToolbarHeight) * MediaQuery.of(context).devicePixelRatio).toInt();
+    final result = await _snapchat.showBitmojiPicker(topPadding);
+    print('INFO (showBitmojiPicker) > type: ${result.runtimeType}, result: ${result.toString()}');
+    if (result is Map && result['type'] == 'bitmoji_url') {
+      setState(() {
+        _bitmojiUrl = result['url'];
+      });
+    }
+
     setState(() {
       _isBitmojisPickerVisible = false;
     });

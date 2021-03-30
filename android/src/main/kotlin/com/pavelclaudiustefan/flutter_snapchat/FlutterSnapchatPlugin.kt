@@ -179,10 +179,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         val topPadding = call.argument<Int>("topPadding")
         val friendUserId: String? = call.argument("friendUserId")
 
-//        val vParams: ViewGroup.LayoutParams = ViewGroup.LayoutParams(
-//                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-//        )
-
         val bitmojiPickerWidth: Int = _activity.window.decorView.width
         val bitmojiPickerHeight: Int = if (topPadding != null) {
           _activity.window.decorView.height - topPadding
@@ -199,10 +195,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         val container = FrameLayout(_activity)
         container.layoutParams = vParams
         container.id = id
-
-//        val textView = TextView(_context)
-//        textView.text = "Loading..."
-//        container.addView(textView)
 
         _activity.addContentView(container, vParams)
 
@@ -221,18 +213,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
           if (!friendUserId.isNullOrBlank()) {
             bitmojiFragment!!.setFriend(friendUserId)
           }
-
-//        bitmojiFragment.setOnBitmojiSearchFocusChangeListener {
-//          if (it) {
-//            val toast = Toast(_context);
-//            toast.setText("Focused")
-//            Toast.makeText(_context, "", Toast.LENGTH_SHORT).show()
-//            container.requestFocusFromTouch()
-//            container.showSoftKeyboard()
-//          } else {
-//            container.hideSoftKeyboard()
-//          }
-//        }
         }
 
         val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager

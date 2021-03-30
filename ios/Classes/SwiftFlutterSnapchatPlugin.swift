@@ -9,11 +9,17 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     let flutterRegistrar: FlutterPluginRegistrar
     var viewController: UIViewController
     
-//    var delegate: SCSDKBitmojiStickerPickerViewControllerDelegate
+    var result: FlutterResult?
     
     var _snapApi: SCSDKSnapAPI?
     
+    var _stickerPickerVC: SCSDKBitmojiStickerPickerViewController?
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
+        let factory = BitmojiPickerViewFactory(messenger: registrar.messenger())
+        registrar.register(factory, withId: "com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker")
+                    
+        
         let channel = FlutterMethodChannel(name: "flutter_snapchat", binaryMessenger: registrar.messenger())
         
         let viewController: UIViewController = (UIApplication.shared.delegate?.window??.rootViewController)!;
@@ -30,6 +36,8 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        self.result = result
+        
         switch call.method {
         case "login":
             SCSDKLoginClient.login(from: (UIApplication.shared.keyWindow?.rootViewController)!) { (success: Bool, error: Error?) in
@@ -70,16 +78,16 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
             result("Logout Success")
             
         case "send":
-            sendToSnapchat(call, result)
+            _sendToSnapchat(call, result)
             
         case "showBitmojiPicker":
-            showBitmojiPicker(call, result)
+            _showBitmojiPicker(call, result)
             
         case "closeBitmojiPicker":
-            result("")
+            _closeBitmojiPicker(result)
             
         case "setBitmojiPickerQuery":
-            result("")
+            _setBitmojiPickerQuery(call, result)
             
         case "isInstalled":
             let appScheme = "snapchat://app"
@@ -94,7 +102,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    private func sendToSnapchat(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+    private func _sendToSnapchat(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard let arguments = call.arguments,
               let args = arguments as? [String: Any] else { return }
         
@@ -160,7 +168,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
         })
     }
     
-    private func showBitmojiPicker(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+    private func _showBitmojiPicker(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard let arguments = call.arguments,
               let args = arguments as? [String: Any] else { return }
         
@@ -171,56 +179,198 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
             isDarkTheme = false;
         }
         
-        let stickerPickerVC: SCSDKBitmojiStickerPickerViewController = SCSDKBitmojiStickerPickerViewController(
+        if (_stickerPickerVC == nil) {
+            _stickerPickerVC = SCSDKBitmojiStickerPickerViewController(
+                config: SCSDKBitmojiStickerPickerConfigBuilder()
+                    .withShowSearchBar(true)
+                    .withShowSearchPills(true)
+                    .withTheme(isDarkTheme ? .dark : .light)
+                    .build()
+            )
+        }
+        
+        _stickerPickerVC?.presentationController?.delegate = self
+        
+        _stickerPickerVC?.delegate = self
+        
+        if let friendUserId = args["friendUserId"] as? String {
+            _stickerPickerVC?.setFriendUserId(friendUserId)
+        }
+        
+        let rootController = UIApplication.shared.delegate?.window??.rootViewController
+        rootController?.present(_stickerPickerVC!, animated: true)
+    }
+    
+    private func _closeBitmojiPicker(_ result: @escaping FlutterResult) {
+        _stickerPickerVC?.dismiss(animated: true)
+        
+//        result("Closed Bitmoji Picker from flutter")
+//        _stickerPickerVC = nil
+    }
+    
+    private func _setBitmojiPickerQuery(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        guard let arguments = call.arguments,
+              let args = arguments as? [String: Any] else {
+            result(FlutterError(code: "BitmojiPickerQueryError", message: "Invalid arguments", details: nil))
+            return
+        }
+        
+        guard let searchText = args["query"] as? String else {
+            result(FlutterError(code: "BitmojiPickerQueryError", message: "Invalid query", details: nil))
+            return
+        }
+        
+        _stickerPickerVC?.setSearchTerm(searchText, searchMode: .searchResultOnly)
+        result("Bitmoji picker search text updated")
+    }
+    
+    private func handleBitmojiPickerClosed() {
+        result?("Closed Bitmoji Picker")
+//        _stickerPickerVC = nil
+    }
+    
+    private func handleBitmojiSelected(imageURL: String, image: UIImage?) {
+        result?([
+            "type": "bitmoji_url",
+            "url": imageURL
+        ])
+        
+        _stickerPickerVC?.dismiss(animated: true)
+    }
+    
+}
+
+extension SwiftFlutterSnapchatPlugin: UIAdaptivePresentationControllerDelegate {
+//    public func presentationControllerWillDismiss(_ presentationController: UIPresentationController) {
+//        handleBitmojiPickerClosed()
+//    }
+    
+    public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        handleBitmojiPickerClosed()
+    }
+}
+
+extension SwiftFlutterSnapchatPlugin: SCSDKBitmojiStickerPickerViewControllerDelegate {
+    public func bitmojiStickerPickerViewController(_ stickerPickerViewController: SCSDKBitmojiStickerPickerViewController,
+                                            didSelectBitmojiWithURL bitmojiURL: String,
+                                            image: UIImage?) {
+        handleBitmojiSelected(imageURL: bitmojiURL, image: image)
+    }
+    
+    public func bitmojiStickerPickerViewController(_ stickerPickerViewController: SCSDKBitmojiStickerPickerViewController, searchFieldFocusDidChangeWithFocus hasFocus: Bool) {
+//        bitmojiSearchHasFocus = hasFocus
+    }
+}
+
+class BitmojiPickerViewFactory: NSObject, FlutterPlatformViewFactory {
+    private var messenger: FlutterBinaryMessenger
+
+    init(messenger: FlutterBinaryMessenger) {
+        self.messenger = messenger
+        super.init()
+    }
+
+    func create(
+        withFrame frame: CGRect,
+        viewIdentifier viewId: Int64,
+        arguments args: Any?
+    ) -> FlutterPlatformView {
+        return BitmojiPickerView(
+            frame: frame,
+            viewIdentifier: viewId,
+            arguments: args,
+            binaryMessenger: messenger)
+    }
+}
+
+class BitmojiPickerView: NSObject, FlutterPlatformView {
+    private var _view: UIView
+    private var _stickerPickerVC: SCSDKBitmojiStickerPickerViewController
+
+    init(
+        frame: CGRect,
+        viewIdentifier viewId: Int64,
+        arguments args: Any?,
+        binaryMessenger messenger: FlutterBinaryMessenger?
+    ) {
+        _view = UIView()
+        
+        var isDarkTheme: Bool
+        var friendUserId: String? = nil
+        if let args = args as? [String: Any] {
+            
+            if let isDarkThemeArg = args["isDarkTheme"] as? Bool {
+                isDarkTheme = isDarkThemeArg;
+            } else {
+                isDarkTheme = false;
+            }
+            
+            friendUserId = args["friendUserId"] as? String
+            
+        } else {
+            isDarkTheme = false;
+        }
+        
+        _stickerPickerVC = SCSDKBitmojiStickerPickerViewController(
             config: SCSDKBitmojiStickerPickerConfigBuilder()
                 .withShowSearchBar(true)
                 .withShowSearchPills(true)
                 .withTheme(isDarkTheme ? .light : .dark)
                 .build()
         )
-        stickerPickerVC.delegate = self
         
-        if let friendUserId = args["friendUserId"] as? String {
-            stickerPickerVC.setFriendUserId(friendUserId)
+        if let friendUserId = friendUserId {
+            _stickerPickerVC.setFriendUserId(friendUserId)
         }
         
-//        addChildViewController(stickerPickerVC)
-//        view.addSubview(stickerPickerVC.view)
-//        stickerPickerVC.didMove(toParentViewController: self)
+        super.init()
         
-        viewController.addChild(stickerPickerVC)
-        viewController.view.addSubview(stickerPickerVC.view)
-        stickerPickerVC.didMove(toParent: viewController)
+        createNativeView(view: _view, args)
+    }
+
+    func view() -> UIView {
+        return _view
+    }
+
+    func createNativeView(view _view: UIView, _ arguments: Any?) {
+        _stickerPickerVC.delegate = self
         
-        result("Opened bitmoji picker")
+        let rootController = UIApplication.shared.delegate?.window??.rootViewController
+        rootController?.present(_stickerPickerVC, animated: true, completion: nil)
         
-        
-//        if let navigationController = viewController.navigationController {
-//            navigationController.pushViewController(stickerPickerVC, animated: true)
+//        if let viewController = UIApplication.shared.delegate?.window??.rootViewController {
+//            viewController.addChild(_stickerPickerVC)
+//
+//            _view.addSubview(_stickerPickerVC.view)
+//            _stickerPickerVC.didMove(toParent: viewController)
 //        }
         
 //        if let navigationController = UIApplication.shared.keyWindow?.rootViewController as? UINavigationController {
-//            navigationController.pushViewController(stickerPickerVC, animated: true)
-//        }
+//            navigationController.pushViewController(_stickerPickerVC, animated: true)
 //
-//        result("2nd variant")
-        
-        let storyboard : UIStoryboard? = UIStoryboard.init(name: "Main", bundle: nil);
-        let window: UIWindow = ((UIApplication.shared.delegate?.window)!)!
-
-        let objVC: UIViewController? = storyboard!.instantiateViewController(withIdentifier: "FlutterViewController")
-        let aObjNavi = UINavigationController(rootViewController: objVC!)
-        window.rootViewController = aObjNavi
-        aObjNavi.pushViewController(viewController, animated: true)
+//            _view.addSubview(_stickerPickerVC.view)
+//            _stickerPickerVC.didMove(toParent: navigationController)
+//
+//        } else {
+//            let storyboard : UIStoryboard? = UIStoryboard.init(name: "Main", bundle: nil);
+//            let window: UIWindow = ((UIApplication.shared.delegate?.window)!)!
+//
+//            let objVC: UIViewController? = storyboard!.instantiateViewController(withIdentifier: "FlutterViewController")
+//            let aObjNavi = UINavigationController(rootViewController: objVC!)
+//            window.rootViewController = aObjNavi
+//            aObjNavi.pushViewController(_stickerPickerVC, animated: true)
+//
+//            _view.addSubview(_stickerPickerVC.view)
+//            _stickerPickerVC.didMove(toParent: aObjNavi)
+//        }
     }
     
     private func handleBitmojiSend(imageURL: String, image: UIImage?) {
         
     }
-    
 }
 
-extension SwiftFlutterSnapchatPlugin: SCSDKBitmojiStickerPickerViewControllerDelegate {
+extension BitmojiPickerView: SCSDKBitmojiStickerPickerViewControllerDelegate {
     public func bitmojiStickerPickerViewController(_ stickerPickerViewController: SCSDKBitmojiStickerPickerViewController,
                                             didSelectBitmojiWithURL bitmojiURL: String,
                                             image: UIImage?) {

@@ -27,14 +27,10 @@ class FlutterSnapchat {
   /// Opens Snapchat oauth screen in app (if installed) or in a browser
   /// Returns snapchat user or throws error if it fails
   Future<SnapchatUser> login() async {
-    final loginResult = await _channel.invokeMethod('login');
-
-    print('\n\n\n${loginResult.toString()}\n\n\n');
+    await _channel.invokeMethod('login');
 
     final currentUser = await this.currentUser;
     onLogin?.call(currentUser);
-
-    print('\nloginUser - Current user: $currentUser\n');
 
     return currentUser;
   }
@@ -96,15 +92,18 @@ class FlutterSnapchat {
     return isInstalled;
   }
 
+  /// On Android, search bar is disabled because of graphical bug and text
+  /// input not being focused (therefore not opening keyboard)
+  ///
   /// [topPadding] is top padding in pixels
   /// [friendUserId] is the id of a user also connected with snapchat
-  Future showBitmojiPicker(int topPadding, {String friendUserId}) async {
+  Future showBitmojiPicker(int topPadding, {String friendUserId, bool isDarkTheme = true}) async {
     try {
       final result = await _channel.invokeMethod('showBitmojiPicker',
           {
             'topPadding': topPadding,
             'friendUserId': friendUserId,
-            'isDarkTheme': true
+            'isDarkTheme': isDarkTheme
           }
       );
 
@@ -128,11 +127,9 @@ class FlutterSnapchat {
       final result = await _channel.invokeMethod('setBitmojiPickerQuery', {
         'query': query
       });
-      print('INFO (setBitmojiPickerQuery) > ${result.toString()}');
       return result;
 
     } catch (e) {
-      print('ERROR (setBitmojiPickerQuery) > ${e.toString()}');
       return e;
     }
   }

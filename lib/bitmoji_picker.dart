@@ -1,17 +1,25 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 typedef void BitmojiPickerCreatedCallback(BitmojiPickerController controller);
 
+/// Android implementation of platform view is WIP
+/// iOS implementation of platform view is WIP
 @deprecated
 class BitmojiPicker extends StatefulWidget {
 
-  const BitmojiPicker({
+  BitmojiPicker({
     Key key,
+    this.creationParams,
     this.onBitmojiPickerCreated,
-  }) : super(key: key);
+  }) : super(key: key) {
+    assert (Platform.isIOS);
+  }
 
+  final Map<String, dynamic> creationParams;
   final BitmojiPickerCreatedCallback onBitmojiPickerCreated;
 
   @override
@@ -32,12 +40,14 @@ class _BitmojiPickerState extends State<BitmojiPicker> {
       return AndroidView(
         viewType: 'com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker',
         onPlatformViewCreated: _onPlatformViewCreated,
-
+        creationParams: widget.creationParams,
       );
+
     } else if(defaultTargetPlatform == TargetPlatform.iOS) {
       return UiKitView(
         viewType: 'com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker',
         onPlatformViewCreated: _onPlatformViewCreated,
+        creationParams: widget.creationParams,
       );
     }
 
@@ -64,8 +74,10 @@ class BitmojiPickerController {
     return _channel.invokeMethod('setupBitmojisPicker');
   }
 
-  // Future<void> setQuery(String query) async {
-  //   assert(query != null);
-  //   return _channel.invokeMethod('setQuery', query);
-  // }
+  // TODO - Android
+  // TODO - iOS
+  Future<void> setSearchText(String searchText) async {
+    assert(searchText != null);
+    return _channel.invokeMethod('setSearchText', searchText);
+  }
 }
