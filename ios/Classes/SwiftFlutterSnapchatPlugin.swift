@@ -32,7 +32,6 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     init(pluginRegistrar: FlutterPluginRegistrar, uiViewController: UIViewController) {
         self.flutterRegistrar = pluginRegistrar
         self.viewController = uiViewController
-//        delegate = SwiftFlutterSnapchatPluginDelegate(registrar: pluginRegistrar, viewController: uiViewController)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -157,8 +156,6 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
             self._snapApi = SCSDKSnapAPI()
         }
         
-        //        result(mediaType! + " " + mediaUrl!)
-        
         self._snapApi!.startSending(content!, completionHandler: { (error: Error?) in
             if (error != nil) {
                 result(FlutterError(code: "SendMediaSendError", message: error.debugDescription, details: error?.localizedDescription))
@@ -203,9 +200,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     
     private func _closeBitmojiPicker(_ result: @escaping FlutterResult) {
         _stickerPickerVC?.dismiss(animated: true)
-        
-//        result("Closed Bitmoji Picker from flutter")
-//        _stickerPickerVC = nil
+        // Result is sent back with the use of UIAdaptivePresentationControllerDelegate
     }
     
     private func _setBitmojiPickerQuery(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
