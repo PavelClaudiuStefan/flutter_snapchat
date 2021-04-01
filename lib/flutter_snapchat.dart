@@ -92,18 +92,23 @@ class FlutterSnapchat {
     return isInstalled;
   }
 
-  /// On Android, search bar is disabled because of graphical bug and text
-  /// input not being focused (therefore not opening keyboard)
-  ///
-  /// [topPadding] is top padding in pixels
+  // TODO - Add on bitmoji selected listener
+  // TODO - Add on error listener
+  // TODO - Return void when bitmoji picker is closed instead of result
   /// [friendUserId] is the id of a user also connected with snapchat
-  Future showBitmojiPicker(int topPadding, {String friendUserId, bool isDarkTheme = true}) async {
+  Future showBitmojiPicker(int topPadding, {
+    String friendUserId,
+    bool isDarkTheme = true,
+    bool hasSearchBar = true,
+    bool hasSearchPills = true
+  }) async {
     try {
       final result = await _channel.invokeMethod('showBitmojiPicker',
           {
-            'topPadding': topPadding,
             'friendUserId': friendUserId,
-            'isDarkTheme': isDarkTheme
+            'isDarkTheme': isDarkTheme,
+            'hasSearchBar': hasSearchBar,
+            'hasSearchPills': hasSearchPills,
           }
       );
 

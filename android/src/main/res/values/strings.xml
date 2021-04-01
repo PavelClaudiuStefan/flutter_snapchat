@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_bitmoji">Search Bitmoji...</string>
+    <string name="content_description_search_icon">Search icon</string>
+</resources>

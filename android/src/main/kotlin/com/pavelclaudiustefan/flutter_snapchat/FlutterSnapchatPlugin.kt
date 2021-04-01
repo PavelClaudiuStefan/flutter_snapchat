@@ -3,10 +3,6 @@ package com.pavelclaudiustefan.flutter_snapchat
 import android.app.Activity
 import android.content.Context
 import android.os.Build
-import android.view.Gravity
-import android.view.View
-import android.view.inputmethod.InputMethodManager
-import android.widget.FrameLayout
 import androidx.annotation.NonNull
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -71,12 +67,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    flutterPluginBinding
-            .platformViewRegistry
-            .registerViewFactory(
-                    "com.pavelclaudiustefan.flutter_snapchat/bitmoji_picker",
-                    BitmojiPickerFactory(flutterPluginBinding.binaryMessenger))
-
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_snapchat")
     channel.setMethodCallHandler(this)
   }
@@ -153,10 +143,10 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
           val stickerPath: String? = stickerMap["imageUrl"] as String?
           if (BuildConfig.DEBUG && stickerPath == null) {
             result.error("SendError", "Sticker path is null", null)
-            error("Sticker path is null")
+            return
           }
           val sticker: SnapSticker = try {
-            mediaFactory!!.getSnapStickerFromFile(File(stickerPath))
+            mediaFactory!!.getSnapStickerFromFile(File(stickerPath!!))
           } catch (e: SnapStickerSizeException) {
             _result.error("400", e.message, null)
             return
@@ -174,52 +164,77 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       }
       "isInstalled" -> result.success(SnapUtils.isSnapchatInstalled(_activity.packageManager, "com.snapchat.android"))
       "showBitmojiPicker" -> {
-        val id = 0x123456
-
-        val topPadding = call.argument<Int>("topPadding")
         val friendUserId: String? = call.argument("friendUserId")
+        val isDarkTheme: Boolean = call.argument("isDarkTheme") ?: false
+        val hasSearchBar: Boolean = call.argument("hasSearchBar") ?: true
+        val hasSearchPills: Boolean = call.argument("hasSearchPills") ?: true
 
-        val bitmojiPickerWidth: Int = _activity.window.decorView.width
-        val bitmojiPickerHeight: Int = if (topPadding != null) {
-          _activity.window.decorView.height - topPadding
-        } else {
-          (_activity.window.decorView.height * 0.8).toInt()
-        }
-
-        val vParams = FrameLayout.LayoutParams(
-                bitmojiPickerWidth,  // Width in pixels
-                bitmojiPickerHeight,  // Height in pixels
-                Gravity.BOTTOM
+        val bitmojiPickerBottomSheet = BitmojiPickerBottomSheet.newInstance(
+                friendUserId = friendUserId,
+                isDarkTheme = isDarkTheme,
+                hasSearchBar = hasSearchBar,
+                hasSearchPills = hasSearchPills,
+                onBitmojiClickedListener = {
+                  result.success(mapOf(
+                          Pair("type", "bitmoji_url"),
+                          Pair("url", it)
+                  ))
+                },
+                onDismissListener = {
+                  if (!it) {
+                    result.success("Closed bitmoji picker")
+                  }
+                }
         )
+        val fragmentManager: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+        bitmojiPickerBottomSheet.show(fragmentManager, "bitmoji_picker_bottom_sheet")
 
-        val container = FrameLayout(_activity)
-        container.layoutParams = vParams
-        container.id = id
-
-        _activity.addContentView(container, vParams)
-
-        if (bitmojiFragment == null) {
-          bitmojiFragment = BitmojiFragment.builder().withShowSearchBar(false).build()
-
-          bitmojiFragment!!.setOnBitmojiSelectedListener { s, _ ->
-            result.success(mapOf(
-                    Pair("type", "bitmoji_url"),
-                    Pair("url", s),
-            ))
-            val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
-            fm.popBackStack()
-          }
-
-          if (!friendUserId.isNullOrBlank()) {
-            bitmojiFragment!!.setFriend(friendUserId)
-          }
-        }
-
-        val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
-        fm.beginTransaction()
-                .replace(id, bitmojiFragment!!)
-                .addToBackStack("BitmojiPicker")
-                .commitAllowingStateLoss()
+//        val id = 0x123456
+//
+//        val topPadding = call.argument<Int>("topPadding")
+//        val friendUserId: String? = call.argument("friendUserId")
+//
+//        val bitmojiPickerWidth: Int = _activity.window.decorView.width
+//        val bitmojiPickerHeight: Int = if (topPadding != null) {
+//          _activity.window.decorView.height - topPadding
+//        } else {
+//          (_activity.window.decorView.height * 0.8).toInt()
+//        }
+//
+//        val vParams = FrameLayout.LayoutParams(
+//                bitmojiPickerWidth,  // Width in pixels
+//                bitmojiPickerHeight,  // Height in pixels
+//                Gravity.BOTTOM
+//        )
+//
+//        val container = FrameLayout(_activity)
+//        container.layoutParams = vParams
+//        container.id = id
+//
+//        _activity.addContentView(container, vParams)
+//
+//        if (bitmojiFragment == null) {
+//          bitmojiFragment = BitmojiFragment.builder().withShowSearchBar(false).build()
+//
+//          bitmojiFragment!!.setOnBitmojiSelectedListener { s, _ ->
+//            result.success(mapOf(
+//                    Pair("type", "bitmoji_url"),
+//                    Pair("url", s),
+//            ))
+//            val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+//            fm.popBackStack()
+//          }
+//
+//          if (!friendUserId.isNullOrBlank()) {
+//            bitmojiFragment!!.setFriend(friendUserId)
+//          }
+//        }
+//
+//        val fm: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
+//        fm.beginTransaction()
+//                .replace(id, bitmojiFragment!!)
+//                .addToBackStack("BitmojiPicker")
+//                .commitAllowingStateLoss()
       }
       "closeBitmojiPicker" -> {
         bitmojiFragment = null
@@ -239,32 +254,6 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       "getPlatformVersion" -> result.success("Android " + Build.VERSION.RELEASE)
       else -> result.notImplemented()
     }
-  }
-
-  private fun View.showSoftKeyboard(force: Boolean = false) {
-    val inputMethodManager =
-            context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    if (force) {
-      inputMethodManager.toggleSoftInput(
-              InputMethodManager.SHOW_FORCED,
-              InputMethodManager.HIDE_IMPLICIT_ONLY
-      )
-    }
-
-    inputMethodManager.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
-  }
-
-  private fun View.hideSoftKeyboard(force: Boolean = false) {
-    val inputMethodManager =
-            context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    if (force) {
-      inputMethodManager.toggleSoftInput(
-              InputMethodManager.SHOW_FORCED,
-              InputMethodManager.HIDE_IMPLICIT_ONLY
-      )
-    }
-    
-    inputMethodManager.hideSoftInputFromWindow(this.windowToken, InputMethodManager.HIDE_IMPLICIT_ONLY)
   }
 
   private fun initCreativeApi() {
