@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+// TODO - Replace platform exceptions with detailed and formatted errors
 class FlutterSnapchat {
   static const MethodChannel _channel = const MethodChannel('flutter_snapchat');
 
@@ -22,6 +23,12 @@ class FlutterSnapchat {
   static Future<String> get platformVersion async {
     final String version = await _channel.invokeMethod('getPlatformVersion');
     return version;
+  }
+
+  Future<bool> isUserLoggedIn() async {
+    final isUserLoggedIn = await _channel.invokeMethod('isUserLoggedIn');
+
+    return isUserLoggedIn;
   }
 
   /// Opens Snapchat oauth screen in app (if installed) or in a browser
@@ -61,19 +68,21 @@ class FlutterSnapchat {
   }
 
   /// Share photo/video/live camera content
-  Future share(SnapchatMediaType mediaType,
-      {String mediaUrl,
+  Future share(SnapchatMediaType mediaType, {
+        String mediaFilePath,
         SnapchatSticker sticker,
         String caption,
-        String attachmentUrl}) async {
+        String attachmentUrl
+  }) async {
+
     assert(mediaType != null && (caption != null ? caption.length <= 250 : true));
 
-    if (mediaType != SnapchatMediaType.none) assert(mediaUrl != null);
+    if (mediaType != SnapchatMediaType.none) assert(mediaFilePath != null);
 
     try {
-      final result = await _channel.invokeMethod('send', <String, dynamic>{
+      final result = await _channel.invokeMethod('share', <String, dynamic>{
         'mediaType': mediaType.toString().substring(mediaType.toString().indexOf('.') + 1),
-        'mediaUrl': mediaUrl,
+        'mediaFilePath': mediaFilePath,
         'sticker': sticker != null ? sticker.toMap() : null,
         'caption': caption,
         'attachment': attachmentUrl
@@ -92,15 +101,19 @@ class FlutterSnapchat {
     return isInstalled;
   }
 
-  // TODO - Add on bitmoji selected listener
-  // TODO - Add on error listener
-  // TODO - Return void when bitmoji picker is closed instead of result
   /// [friendUserId] is the id of a user also connected with snapchat
-  Future showBitmojiPicker(int topPadding, {
+  ///
+  /// Returns void when bitmoji picker is closed by
+  ///   - user selecting a bitmoji
+  ///   - user closing it manually
+  ///   - [closeBitmojiPicker] getting called
+  Future<void> showBitmojiPicker({
     String friendUserId,
-    bool isDarkTheme = true,
+    bool isDarkTheme = false,
     bool hasSearchBar = true,
-    bool hasSearchPills = true
+    bool hasSearchPills = true,
+    void Function(String bitmojiUrl) onBitmojiSelected,
+    void Function(dynamic bitmojiUrl) onError,
   }) async {
     try {
       final result = await _channel.invokeMethod('showBitmojiPicker',
@@ -112,30 +125,43 @@ class FlutterSnapchat {
           }
       );
 
-      return result;
+      if (result is Map && result['type'] == 'bitmoji_url') {
+        onBitmojiSelected?.call(result["url"]);
+      }
+
+      return;
+
     } catch (e) {
-      return e;
+      onError?.call(e);
+      return;
     }
   }
 
-  Future closeBitmojiPicker() async {
+  /// Returns
+  ///   - true: if method closed bitmoji picker
+  ///   - false: if bitmoji picker was not opened
+  Future<bool> closeBitmojiPicker() async {
     try {
-      final result = await _channel.invokeMethod('closeBitmojiPicker');
-      return result;
+      await _channel.invokeMethod('closeBitmojiPicker');
+      return true;
+
     } catch (e) {
-      return e;
+      return false;
     }
   }
 
-  Future setBitmojiPickerQuery(String query) async {
+  /// Returns
+  ///   - true: if search text has been set
+  ///   - false: if bitmoji picker was not opened
+  Future<bool> setBitmojiPickerSearchText(String searchText) async {
     try {
-      final result = await _channel.invokeMethod('setBitmojiPickerQuery', {
-        'query': query
+      await _channel.invokeMethod('setBitmojiPickerSearchText', {
+        'searchText': searchText
       });
-      return result;
+      return true;
 
     } catch (e) {
-      return e;
+      return false;
     }
   }
 }
@@ -160,8 +186,8 @@ class SnapchatUser {
 
 class SnapchatSticker {
 
-  /// Sticker image url
-  String imageUrl;
+  /// Sticker image file path
+  String imageFilePath;
 
   /// True if sticker is animated
   bool isAnimated;
@@ -172,18 +198,44 @@ class SnapchatSticker {
   double y;
   double rotation;
 
-  SnapchatSticker(this.imageUrl, this.isAnimated, {
+  /// [width] valid range is from 0.0 to 300.0
+  /// [height] valid range is from 0.0 to 300.0
+  /// [x] valid range is from 0.0 to 1.0
+  /// [y] valid range is from 0.0 to 1.0
+  /// [rotation] valid range is from 0.0 to 360.0
+  SnapchatSticker(this.imageFilePath, this.isAnimated, {
     this.width,
     this.height,
     this.x,
     this.y,
     this.rotation,
-  })
-      : assert(imageUrl != null && isAnimated != null);
+  }) {
+    assert(imageFilePath != null && isAnimated != null);
+
+    if (width != null) {
+      assert(width >= 0.0 && width <= 300.0);
+    }
+
+    if (height != null) {
+      assert(height >= 0.0 && height <= 300.0);
+    }
+
+    if (x != null) {
+      assert(x >= 0.0 && x <= 1.0);
+    }
+
+    if (y != null) {
+      assert(y >= 0.0 && y <= 1.0);
+    }
+
+    if (rotation != null) {
+      assert(rotation >= 0.0 && rotation <= 360.0);
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'imageUrl': this.imageUrl,
+      'imageFilePath': this.imageFilePath,
       'animated': this.isAnimated,
       'width': width,
       'height': height,

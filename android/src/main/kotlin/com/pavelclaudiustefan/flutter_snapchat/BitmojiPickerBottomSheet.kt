@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.annotation.Nullable
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragment
+import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragmentSearchMode
 
 class BitmojiPickerBottomSheet : BottomSheetDialogFragment() {
 
@@ -88,5 +89,9 @@ class BitmojiPickerBottomSheet : BottomSheetDialogFragment() {
 
     override fun getTheme(): Int {
         return R.style.CustomBottomSheetDialog
+    }
+
+    fun setSearchText(searchText: String?, searchMode: BitmojiFragmentSearchMode = BitmojiFragmentSearchMode.SEARCH_RESULT_ONLY) {
+        bitmojiFragment?.setSearchText(searchText ?: "", searchMode)
     }
 }

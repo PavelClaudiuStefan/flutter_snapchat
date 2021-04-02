@@ -85,8 +85,8 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
         case "closeBitmojiPicker":
             _closeBitmojiPicker(result)
             
-        case "setBitmojiPickerQuery":
-            _setBitmojiPickerQuery(call, result)
+        case "setBitmojiPickerSearchText":
+            _setBitmojiPickerSearchText(call, result)
             
         case "isInstalled":
             let appScheme = "snapchat://app"
@@ -106,17 +106,17 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
               let args = arguments as? [String: Any] else { return }
         
         let mediaType = args["mediaType"] as? String
-        let mediaUrl = args["mediaUrl"] as? String
+        let mediaFilePath = args["mediaFilePath"] as? String
         
         var content: SCSDKSnapContent?
         
         switch (mediaType) {
         case "photo":
-            //            let photo = SCSDKSnapPhoto(imageUrl: URL(string: mediaUrl!)!)
-            let photo = SCSDKSnapPhoto(imageUrl: URL(fileURLWithPath: mediaUrl!))
+            //            let photo = SCSDKSnapPhoto(imageUrl: URL(string: mediaFilePath!)!)
+            let photo = SCSDKSnapPhoto(imageUrl: URL(fileURLWithPath: mediaFilePath!))
             content = SCSDKPhotoSnapContent(snapPhoto: photo)
         case "video":
-            let video = SCSDKSnapVideo(videoUrl: URL(fileURLWithPath: mediaUrl!))
+            let video = SCSDKSnapVideo(videoUrl: URL(fileURLWithPath: mediaFilePath!))
             content = SCSDKVideoSnapContent(snapVideo: video)
         case "none":
             content = SCSDKNoSnapContent()
@@ -132,7 +132,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
         content?.attachmentUrl = attachmentUrl
         
         if let sticker = args["sticker"] as? [String: Any] {
-            let url = sticker["imageUrl"] as? String
+            let stickerFilePath = sticker["imageFilePath"] as? String
             let isAnimated = sticker["animated"] as? Bool
             
             let width = sticker["width"] as? Float
@@ -140,15 +140,19 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
             
             let x = sticker["x"] as? Float
             let y = sticker["y"] as? Float
+
+            let rotation = sticker["rotation"] as? Float
             
-            let snapSticker = SCSDKSnapSticker(stickerUrl: URL(fileURLWithPath: url!), isAnimated: isAnimated!)
+            let snapSticker = SCSDKSnapSticker(stickerUrl: URL(fileURLWithPath: stickerFilePath!), isAnimated: isAnimated!)
             
             if (width != nil) { snapSticker.width = CGFloat(width!) }
             if (height != nil) { snapSticker.height = CGFloat(height!) }
             
             if (x != nil) { snapSticker.posX = CGFloat(x!) }
             if (y != nil) { snapSticker.posY = CGFloat(y!) }
-            
+
+            if (rotation != nil) { snapSticker.rotationDegreesClockwise = CGFloat(rotation!) }
+
             content?.sticker = snapSticker
         }
         
@@ -203,15 +207,15 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
         // Result is sent back with the use of UIAdaptivePresentationControllerDelegate
     }
     
-    private func _setBitmojiPickerQuery(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+    private func _setBitmojiPickerSearchText(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard let arguments = call.arguments,
               let args = arguments as? [String: Any] else {
             result(FlutterError(code: "BitmojiPickerQueryError", message: "Invalid arguments", details: nil))
             return
         }
         
-        guard let searchText = args["query"] as? String else {
-            result(FlutterError(code: "BitmojiPickerQueryError", message: "Invalid query", details: nil))
+        guard let searchText = args["searchText"] as? String else {
+            result(FlutterError(code: "BitmojiPickerQueryError", message: "Invalid search text", details: nil))
             return
         }
         
