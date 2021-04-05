@@ -4,5 +4,6 @@
         <item>https://auth.snapchat.com/oauth2/api/user.bitmoji.avatar</item>
         <item>https://auth.snapchat.com/oauth2/api/user.display_name</item>
         <item>https://auth.snapchat.com/oauth2/api/user.external_id</item>
+<!--        <item>https://auth.snapchat.com/oauth2/api/user.profile_link</item>-->
     </string-array>
 </resources>

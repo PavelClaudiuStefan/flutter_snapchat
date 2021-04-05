@@ -54,6 +54,9 @@ class FlutterSnapchat {
   Future<SnapchatUser> get currentUser async {
     try {
       final List<dynamic> userDetails = await _channel.invokeMethod('getUser');
+
+      print('INFO (currentUser) > userDetails: ${userDetails.toString()}');
+
       return new SnapchatUser(
           userDetails[0] as String,
           userDetails[1] as String,
@@ -68,6 +71,7 @@ class FlutterSnapchat {
   }
 
   /// Share photo/video/live camera content
+  /// [mediaFilePath] needs to be the path of a platform (android, iOS) specific file. Flutter asset path is not supported
   Future share(SnapchatMediaType mediaType, {
         String mediaFilePath,
         SnapchatSticker sticker,
@@ -187,6 +191,7 @@ class SnapchatUser {
 class SnapchatSticker {
 
   /// Sticker image file path
+  /// [imageFilePath] needs to be the path of a platform (android, iOS) specific file. Flutter asset path is not supported
   String imageFilePath;
 
   /// True if sticker is animated

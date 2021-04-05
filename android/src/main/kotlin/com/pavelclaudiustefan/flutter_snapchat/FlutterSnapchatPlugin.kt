@@ -3,6 +3,7 @@ package com.pavelclaudiustefan.flutter_snapchat
 import android.app.Activity
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.annotation.NonNull
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -34,7 +35,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
-import java.util.ArrayList
+import java.util.*
 
 
 /** FlutterSnapchatPlugin */
@@ -57,6 +58,7 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onLoginFailed() {
+      print("onLoginFailed")
       _result.error("LoginError", "Error logging in", null)
     }
 
@@ -93,37 +95,50 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    Log.i("FlutterPlugin", "\n\nonAttachedToActivity\n\n")
     _activity = binding.activity
     _context = binding.activity.applicationContext
     SnapLogin.getLoginStateController(_activity).addOnLoginStateChangedListener(onLoginStateChangedListener)
+    SnapLogin.getLoginStateController(_activity).addOnLoginStartListener {
+      Log.i("FlutterPlugin", "\n\nonLoginStarted\n\n")
+    }
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
+    Log.i("FlutterPlugin", "\n\nonDetachedFromActivityForConfigChanges\n\n")
     SnapLogin.getLoginStateController(_activity).removeOnLoginStateChangedListener(onLoginStateChangedListener)
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    Log.i("FlutterPlugin", "\n\nonReattachedToActivityForConfigChanges\n\n")
     _activity = binding.activity
     _context = binding.activity.applicationContext
     SnapLogin.getLoginStateController(_activity).addOnLoginStateChangedListener(onLoginStateChangedListener)
   }
 
   override fun onDetachedFromActivity() {
+    Log.i("FlutterPlugin", "\n\nonDetachedFromActivity\n\n")
     SnapLogin.getLoginStateController(_activity).removeOnLoginStateChangedListener(onLoginStateChangedListener)
   }
 
   private fun isUserLoggedIn(@NonNull result: Result) {
     val isUserLoggedIn = SnapLogin.isUserLoggedIn(_activity)
+    Log.i("FlutterPlugin", "\n\nisUserLoggedIn: $isUserLoggedIn\n\n")
     result.success(isUserLoggedIn)
   }
 
+  // result is sent using onLoginStateChangedListener callbacks
   private fun login() {
+//    Log.i("FlutterPlugin", "\n\nlogin\n\n")
+//    val options = SnapKitFeatureOptions()
+//    options.profileLinkEnabled = true
+//    SnapLogin.getAuthTokenManager(_activity).startTokenGrantWithOptions(options)
     SnapLogin.getAuthTokenManager(_activity).startTokenGrant()
-
-    // result is sent using onLoginStateChangedListener callbacks
   }
 
   private fun getUser(@NonNull result: Result) {
+//    Log.i("FlutterPlugin", "\n\ngetUser\n\n")
+//    val query = "{me{externalId, displayName, bitmoji{selfie}, profileLink}}"
     val query = "{me{externalId, displayName, bitmoji{selfie}}}"
     SnapLogin.fetchUserData(_activity, query, null, object : FetchUserDataCallback {
       override fun onSuccess(userDataResponse: UserDataResponse?) {
@@ -132,17 +147,25 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
         }
         val meData = userDataResponse.data.me
         if (meData == null) {
-          result.error("GetUserError", "Me data is null", null)
+          Log.i("FlutterPlugin", "\n\ngetUser: User data is null\n\n")
+          result.error("GetUserError", "User data is null", null)
           return
         }
+
+        Log.i("FlutterPlugin", "\n\ngetUser: meData: ${meData.externalId}, ${meData.displayName}, ${meData.bitmojiData.selfie}, ${meData.profileLink}\n\n")
+
         val res: MutableList<String> = ArrayList()
         res.add(meData.externalId)
         res.add(meData.displayName)
         res.add(meData.bitmojiData.selfie)
+//        if (meData.profileLink != null) {
+//          res.add(meData.profileLink)
+//        }
         result.success(res)
       }
 
       override fun onFailure(isNetworkError: Boolean, statusCode: Int) {
+        Log.i("FlutterPlugin", "isNetworkError: $isNetworkError, statusCode: $statusCode")
         if (isNetworkError) {
           result.error("NetworkGetUserError", "Network Error", statusCode)
         } else {
@@ -152,10 +175,9 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     })
   }
 
+  // result is sent using onLoginStateChangedListener callbacks
   private fun logout() {
     SnapLogin.getAuthTokenManager(_activity).clearToken()
-
-    // result is sent using onLoginStateChangedListener callbacks
   }
 
   private fun share(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -213,6 +235,7 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       content.snapSticker = sticker
     }
     _creativeApi!!.send(content)
+    result.success("Media sent")
   }
 
   private fun isSnapchatInstalled(@NonNull result: Result) {

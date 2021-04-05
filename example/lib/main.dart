@@ -54,17 +54,27 @@ class _MyAppState extends State<MyApp> {
 
   void initSnapchatUser() async {
     try {
-      _snapchatUser = await _snapchat.currentUser;
+      // _snapchatUser = await _snapchat.currentUser;
+
+      final isUserLoggedIn = await _snapchat.isUserLoggedIn();
+
+      if (isUserLoggedIn) {
+        _snapchatUser = await _snapchat.currentUser;
+      } else {
+        _snapchatUser = null;
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
 
     } catch(e) {
+      print('ERROR (initSnapchatUser) > error: ${e.toString()}');
       setState(() {
         _snapchatUser = null;
+        _isLoading = false;
       });
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
