@@ -54,8 +54,6 @@ class _MyAppState extends State<MyApp> {
 
   void initSnapchatUser() async {
     try {
-      // _snapchatUser = await _snapchat.currentUser;
-
       final isUserLoggedIn = await _snapchat.isUserLoggedIn();
 
       if (isUserLoggedIn) {
@@ -260,12 +258,13 @@ class _MyAppState extends State<MyApp> {
       await _snapchat.showBitmojiPicker(
         isDarkTheme: false,
         onBitmojiSelected: (String bitmojiUrl) {
+          print('onBitmojiSelected: $bitmojiUrl');
           setState(() {
             _bitmojiUrl = bitmojiUrl;
           });
         },
         onError: (dynamic e) {
-          print('runtimeType: ${e.runtimeType}, error: ${e.toString()}');
+          print('showBitmojiPicker error: runtimeType: ${e.runtimeType}, error: ${e.toString()}');
 
           if (e is PlatformException) {
             showMessage(e.message);

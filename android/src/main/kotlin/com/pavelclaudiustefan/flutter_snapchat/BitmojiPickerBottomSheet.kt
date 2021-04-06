@@ -1,10 +1,12 @@
 package com.pavelclaudiustefan.flutter_snapchat
 
 import android.content.DialogInterface
+import android.opengl.Visibility
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import androidx.annotation.Nullable
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragment
@@ -73,23 +75,38 @@ class BitmojiPickerBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
+        // TODO - Add indeterminate progress bar while loading bitmoji picker
+
         childFragmentManager
                 .beginTransaction()
-                .replace(R.id.frameLayout, bitmojiFragment!!)
+                .replace(R.id.fragment_container_view, bitmojiFragment!!)
                 .addToBackStack("BitmojiPicker")
-                .commitAllowingStateLoss()
+                .commit()
+
+//        childFragmentManager
+//                .beginTransaction()
+//                .replace(R.id.fragment_container_view, BlankFragment.newInstance("arg1", "arg2"))
+//                .addToBackStack("BlankFragment")
+//                .commit()
+
+//        view.findViewById<ProgressBar>(R.id.progress_bar).visibility = View.INVISIBLE
 
         return view
     }
+
+//    override fun onCancel(dialog: DialogInterface) {
+//        onDismissListener?.invoke(isReplySubmitted)
+//        super.onCancel(dialog)
+//    }
 
     override fun onDismiss(dialog: DialogInterface) {
         onDismissListener?.invoke(isReplySubmitted)
         super.onDismiss(dialog)
     }
 
-    override fun getTheme(): Int {
-        return R.style.CustomBottomSheetDialog
-    }
+//    override fun getTheme(): Int {
+//        return R.style.CustomBottomSheetDialog
+//    }
 
     fun setSearchText(searchText: String?, searchMode: BitmojiFragmentSearchMode = BitmojiFragmentSearchMode.SEARCH_RESULT_ONLY) {
         bitmojiFragment?.setSearchText(searchText ?: "", searchMode)
