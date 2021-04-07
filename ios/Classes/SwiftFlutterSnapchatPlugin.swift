@@ -38,6 +38,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
         self.result = result
         
         switch call.method {
+        case "isUserLoggedIn": result(SCSDKLoginClient.isUserLoggedIn)
         case "login":
             SCSDKLoginClient.login(from: (UIApplication.shared.keyWindow?.rootViewController)!) { (success: Bool, error: Error?) in
                 if (!success) {
@@ -76,7 +77,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
             SCSDKLoginClient.clearToken()
             result("Logout Success")
             
-        case "send":
+        case "share":
             _sendToSnapchat(call, result)
             
         case "showBitmojiPicker":
@@ -102,6 +103,11 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     }
     
     private func _sendToSnapchat(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        if (!SCSDKLoginClient.isUserLoggedIn) {
+            result(FlutterError(code: "UserNotLoggedIn", message: "Cannot share to snapchat if user is not logged in", details: nil))
+            return
+        }
+        
         guard let arguments = call.arguments,
               let args = arguments as? [String: Any] else { return }
         
@@ -151,7 +157,7 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
             if (x != nil) { snapSticker.posX = CGFloat(x!) }
             if (y != nil) { snapSticker.posY = CGFloat(y!) }
 
-            if (rotation != nil) { snapSticker.rotationDegreesClockwise = CGFloat(rotation!) }
+            if (rotation != nil) { snapSticker.rotation = CGFloat(rotation!) }
 
             content?.sticker = snapSticker
         }
@@ -170,6 +176,11 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     }
     
     private func _showBitmojiPicker(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        if (!SCSDKLoginClient.isUserLoggedIn) {
+            result(FlutterError(code: "UserNotLoggedIn", message: "Cannot show bitmoji picker if user is not logged in", details: nil))
+            return
+        }
+        
         guard let arguments = call.arguments,
               let args = arguments as? [String: Any] else { return }
         
@@ -203,7 +214,13 @@ public class SwiftFlutterSnapchatPlugin: NSObject, FlutterPlugin {
     }
     
     private func _closeBitmojiPicker(_ result: @escaping FlutterResult) {
-        _stickerPickerVC?.dismiss(animated: true)
+        if (_stickerPickerVC != nil) {
+            _stickerPickerVC?.dismiss(animated: true)
+            result("Closed bitmoji picker")
+        } else {
+            result(FlutterError(code: "NullBitmojiPicker", message: "Bitmoji picker is not opened", details: nil))
+        }
+        
         // Result is sent back with the use of UIAdaptivePresentationControllerDelegate
     }
     
