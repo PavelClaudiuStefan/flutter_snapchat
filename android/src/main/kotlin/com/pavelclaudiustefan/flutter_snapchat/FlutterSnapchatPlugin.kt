@@ -1,7 +1,10 @@
 package com.pavelclaudiustefan.flutter_snapchat
 
 import android.app.Activity
+import android.app.Application
+import android.content.ComponentCallbacks
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.annotation.NonNull
@@ -34,12 +37,13 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import java.io.File
 import java.util.*
 
 
 /** FlutterSnapchatPlugin */
-class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
+class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
 
   private lateinit var _channel : MethodChannel
 
@@ -272,7 +276,43 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     val fragmentManager: FragmentManager = (_activity as FragmentActivity).supportFragmentManager
-    _bitmojiPickerBottomSheet!!.show(fragmentManager, "bitmoji_picker_bottom_sheet")
+    _bitmojiPickerBottomSheet!!.show(fragmentManager, "bitmoji_picker")
+  }
+
+  /**
+   * WIP
+   */
+  private fun showBitmojiPickerActivity(@NonNull call: MethodCall, @NonNull result: Result) {
+    if (!SnapLogin.isUserLoggedIn(_activity)) {
+      result.error("UserNotLoggedIn", "Cannot show bitmoji picker if user is not logged in", null)
+      return
+    }
+
+    val friendUserId: String? = call.argument("friendUserId")
+    val isDarkTheme: Boolean = call.argument("isDarkTheme") ?: false
+    val hasSearchBar: Boolean = call.argument("hasSearchBar") ?: true
+    val hasSearchPills: Boolean = call.argument("hasSearchPills") ?: true
+
+//    val intent = Intent(_activity, BitmojiPickerActivity.class)
+
+    val intent = Intent(_activity, BitmojiPickerActivity::class.java).apply {
+      putExtra("friendUserId", friendUserId)
+      putExtra("isDarkTheme", isDarkTheme)
+      putExtra("hasSearchBar", hasSearchBar)
+      putExtra("hasSearchPills", hasSearchPills)
+    }
+
+    _activity.startActivityForResult(intent, 1)
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+    Log.i("ShadowDebug", "Result: request code: $requestCode, result code: $resultCode, data: ${data.toString()}")
+
+    if (requestCode == 1) {
+      return true
+    }
+
+    return false
   }
 
   private fun closeBitmojiPicker(@NonNull result: Result) {

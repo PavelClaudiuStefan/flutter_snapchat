@@ -1,3 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.pavelclaudiustefan.flutter_snapchat">
+    package="com.pavelclaudiustefan.flutter_snapchat">
+
+    <application>
+        <activity
+            android:name=".BitmojiPickerActivity"
+            android:theme="@style/Theme.AppCompat.Light"/>
+    </application>
+
 </manifest>

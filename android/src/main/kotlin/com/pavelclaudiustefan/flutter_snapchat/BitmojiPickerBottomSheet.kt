@@ -1,13 +1,14 @@
 package com.pavelclaudiustefan.flutter_snapchat
 
 import android.content.DialogInterface
-import android.opengl.Visibility
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ProgressBar
 import androidx.annotation.Nullable
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentTransaction.TRANSIT_FRAGMENT_FADE
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragment
 import com.snapchat.kit.sdk.bitmoji.ui.BitmojiFragmentSearchMode
@@ -35,6 +36,8 @@ class BitmojiPickerBottomSheet : BottomSheetDialogFragment() {
 
             val bitmojiPickerBottomSheet = BitmojiPickerBottomSheet()
 
+//            bitmojiPickerBottomSheet.setStyle(DialogFragment.STYLE_NORMAL, R.style.CustomBottomSheetDialog)
+
             bitmojiPickerBottomSheet.hasSearchBar = hasSearchBar
             bitmojiPickerBottomSheet.hasSearchPills = hasSearchPills
             bitmojiPickerBottomSheet.isDarkTheme = isDarkTheme
@@ -46,17 +49,15 @@ class BitmojiPickerBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    @Nullable
-    override fun onCreateView(inflater: LayoutInflater,
-                              @Nullable container: ViewGroup?,
-                              @Nullable savedInstanceState: Bundle?): View {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        val view = inflater.inflate(R.layout.layout_bitmoji_picker_bottom_sheet, container, false)
-
-        val lightTheme = R.style.SnapKitBitmojiFragment_Light
-        val darkTheme = R.style.SnapKitBitmojiFragment_Dark
+        val lightTheme = R.style.BitmojiPickerLight
+        val darkTheme = R.style.BitmojiPickerDark
 
         if (bitmojiFragment == null) {
+            Log.i("ShadowDebug", "Creating bitmoji fragment")
+
             bitmojiFragment = BitmojiFragment
                     .builder()
                     .withShowSearchBar(hasSearchBar)
@@ -73,21 +74,89 @@ class BitmojiPickerBottomSheet : BottomSheetDialogFragment() {
             if (!friendUserId.isNullOrBlank()) {
                 bitmojiFragment!!.setFriend(friendUserId)
             }
+
+            bitmojiFragment!!.allowEnterTransitionOverlap = true
         }
 
         // TODO - Add indeterminate progress bar while loading bitmoji picker
 
         childFragmentManager
                 .beginTransaction()
-                .replace(R.id.fragment_container_view, bitmojiFragment!!)
-                .addToBackStack("BitmojiPicker")
+//                .setCustomAnimations(R.anim.frag_slide_in_from_bottom, 0)
+//                .setTransition(TRANSIT_FRAGMENT_FADE)
+                .setCustomAnimations(R.anim.frag_slide_in_from_bottom, 0 , R.anim.frag_slide_in_from_bottom, 0)
+                .replace(R.id.fragment_container_view, bitmojiFragment!!, "bitmoji_picker")
                 .commit()
+    }
 
+    @Nullable
+    override fun onCreateView(inflater: LayoutInflater,
+                              @Nullable container: ViewGroup?,
+                              @Nullable savedInstanceState: Bundle?): View {
+
+        val view = inflater.inflate(R.layout.layout_bitmoji_picker_bottom_sheet, container, false)
+
+//        val lightTheme = R.style.BitmojiPickerLight
+//        val darkTheme = R.style.BitmojiPickerDark
+//
+//        if (bitmojiFragment == null) {
+//            Log.i("ShadowDebug", "Creating bitmoji fragment")
+//
+//            bitmojiFragment = BitmojiFragment
+//                    .builder()
+//                    .withShowSearchBar(hasSearchBar)
+//                    .withShowSearchPills(hasSearchPills)
+//                    .withTheme(if (isDarkTheme) darkTheme else lightTheme)
+//                    .build()
+//
+//            bitmojiFragment!!.setOnBitmojiSelectedListener { bitmojiUrl, _ ->
+//                onBitmojiClickedListener?.invoke(bitmojiUrl)
+//                isReplySubmitted = true
+//                dismiss()
+//            }
+//
+//            if (!friendUserId.isNullOrBlank()) {
+//                bitmojiFragment!!.setFriend(friendUserId)
+//            }
+//
+//            bitmojiFragment!!.allowEnterTransitionOverlap = true
+//        }
+//
+//        // TODO - Add indeterminate progress bar while loading bitmoji picker
+//
 //        childFragmentManager
 //                .beginTransaction()
-//                .replace(R.id.fragment_container_view, BlankFragment.newInstance("arg1", "arg2"))
-//                .addToBackStack("BlankFragment")
+////                .setCustomAnimations(R.anim.frag_slide_in_from_bottom, 0)
+////                .setTransition(TRANSIT_FRAGMENT_FADE)
+//                .replace(R.id.fragment_container_view, bitmojiFragment!!, "BitmojiPicker")
 //                .commit()
+
+
+
+
+
+
+
+
+
+//        if (childFragmentManager.findFragmentByTag("BitmojiPicker") == null) {
+//            Log.i("ShadowDebug", "Adding bitmoji picker")
+//            childFragmentManager
+//                    .beginTransaction()
+//                    .setCustomAnimations(R.anim.frag_slide_in_from_bottom, 0)
+//                    .setTransition(TRANSIT_FRAGMENT_FADE)
+//                    .add(R.id.fragment_container_view, bitmojiFragment!!, "BitmojiPicker")
+//                    .commitNow()
+//        } else {
+//            Log.i("ShadowDebug", "Showing bitmoji picker")
+//
+//            childFragmentManager
+//                    .beginTransaction()
+//                    .setCustomAnimations(R.anim.frag_slide_in_from_bottom, 0)
+//                    .show(bitmojiFragment!!)
+//                    .setTransition(TRANSIT_FRAGMENT_FADE)
+//                    .commitNow()
+//        }
 
 //        view.findViewById<ProgressBar>(R.id.progress_bar).visibility = View.INVISIBLE
 
