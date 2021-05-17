@@ -20,7 +20,7 @@ class _MyAppState extends State<MyApp> {
 
   String _platformVersion = 'Unknown';
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   SnapchatUser _snapchatUser;
   FlutterSnapchat _snapchat;
@@ -135,109 +135,111 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text('Flutter Snapchat Example App'),
-        actions: [
-          if (!_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.image), onPressed: () {
-            showBitmojiPicker();
-          }),
-          if (_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.search), onPressed: () {
-            _snapchat.setBitmojiPickerSearchText('test');
-          })
-        ],
-      ),
-      body: Center(
-        child: _isLoading ? CircularProgressIndicator() : SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                  width: 92,
-                  height: 92,
-                  margin: EdgeInsets.all(16),
-                  child: (_bitmojiUrl?.isEmpty ?? true)
-                      ? Icon(Icons.image)
-                      : Image(image: NetworkImage(_bitmojiUrl))
-              ),
-
-              if (_snapchatUser != null)
+    return ScaffoldMessenger(
+      key: _scaffoldMessengerKey,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Flutter Snapchat Example App'),
+          actions: [
+            if (!_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.image), onPressed: () {
+              showBitmojiPicker();
+            }),
+            if (_isBitmojisPickerVisible) IconButton(icon: Icon(Icons.search), onPressed: () {
+              _snapchat.setBitmojiPickerSearchText('test');
+            })
+          ],
+        ),
+        body: Center(
+          child: _isLoading ? CircularProgressIndicator() : SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 Container(
-                    width: 64,
-                    height: 64,
+                    width: 92,
+                    height: 92,
                     margin: EdgeInsets.all(16),
-                    child: Image(
-                      image: NetworkImage(_snapchatUser.bitmojiUrl),
-                    )
+                    child: (_bitmojiUrl?.isEmpty ?? true)
+                        ? Icon(Icons.image)
+                        : Image(image: NetworkImage(_bitmojiUrl))
                 ),
 
-              if (_snapchatUser != null) Text(_snapchatUser.displayName),
+                if (_snapchatUser != null)
+                  Container(
+                      width: 64,
+                      height: 64,
+                      margin: EdgeInsets.all(16),
+                      child: Image(
+                        image: NetworkImage(_snapchatUser.bitmojiUrl),
+                      )
+                  ),
 
-              if (_snapchatUser != null) Text(
-                  _snapchatUser.externalId,
-                  style: TextStyle(color: Colors.grey, fontSize: 9.0)
-              ),
+                if (_snapchatUser != null) Text(_snapchatUser.displayName),
 
-              Text('Running on: $_platformVersion\n'),
+                if (_snapchatUser != null) Text(
+                    _snapchatUser.externalId,
+                    style: TextStyle(color: Colors.grey, fontSize: 9.0)
+                ),
 
-              if (_snapchatUser == null) ElevatedButton(
-                  onPressed: () => loginUser(),
-                  child: Text('Login with Snapchat')
-              ),
+                Text('Running on: $_platformVersion\n'),
 
-              if (_snapchatUser != null) TextButton(
-                  onPressed: () => logoutUser(), child: Text("Logout")
-              )
-            ],
+                if (_snapchatUser == null) ElevatedButton(
+                    onPressed: () => loginUser(),
+                    child: Text('Login with Snapchat')
+                ),
+
+                if (_snapchatUser != null) TextButton(
+                    onPressed: () => logoutUser(), child: Text("Logout")
+                )
+              ],
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final bool isUserLoggedIn = await _snapchat.isUserLoggedIn();
-          if (!isUserLoggedIn) {
-            showMessage('Login to share to snapchat');
-            return;
-          }
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final bool isUserLoggedIn = await _snapchat.isUserLoggedIn();
+            if (!isUserLoggedIn) {
+              showMessage('Login to share to snapchat');
+              return;
+            }
 
-          /// [background_image.jpg] and [sticker.png] are flutter assets
-          /// These assets are stored as a platform specific file, to be then used when sharing to snapchat
-          final backgroundFilename = 'background_image.jpg';
-          final stickerFilename = 'sticker.png';
+            /// [background_image.jpg] and [sticker.png] are flutter assets
+            /// These assets are stored as a platform specific file, to be then used when sharing to snapchat
+            final backgroundFilename = 'background_image.jpg';
+            final stickerFilename = 'sticker.png';
 
-          final String dir = (await getApplicationDocumentsDirectory()).path;
+            final String dir = (await getApplicationDocumentsDirectory()).path;
 
-          final String backgroundFilePath = '$dir/$backgroundFilename';
-          final String stickerFilePath = '$dir/$stickerFilename';
+            final String backgroundFilePath = '$dir/$backgroundFilename';
+            final String stickerFilePath = '$dir/$stickerFilename';
 
-          if (!(await File(backgroundFilePath).exists())) {
-            var bytes = await rootBundle.load("assets/images/$backgroundFilename");
-            await writeToFile(bytes, backgroundFilePath);
-          }
+            if (!(await File(backgroundFilePath).exists())) {
+              var bytes = await rootBundle.load("assets/images/$backgroundFilename");
+              await writeToFile(bytes, backgroundFilePath);
+            }
 
-          if (!(await File(stickerFilePath).exists())) {
-            var bytes = await rootBundle.load("assets/images/$stickerFilename");
-            await writeToFile(bytes, stickerFilePath);
-          }
+            if (!(await File(stickerFilePath).exists())) {
+              var bytes = await rootBundle.load("assets/images/$stickerFilename");
+              await writeToFile(bytes, stickerFilePath);
+            }
 
-          final result = await _snapchat.share(SnapchatMediaType.photo,
-              mediaFilePath: backgroundFilePath,
-              sticker: SnapchatSticker(
-                  stickerFilePath,
-                  false,
-                  width: 128,
-                  height: 128,
-                  x: 0.5,
-                  y: 0.5
-              ),
-              // attachmentUrl: "https://example.com"
-              attachmentUrl: "smaplo://app/users/CGsTJIzlyscRdMPzgkLHdCrsdVQ2"
-          );
+            final result = await _snapchat.share(SnapchatMediaType.photo,
+                mediaFilePath: backgroundFilePath,
+                sticker: SnapchatSticker(
+                    stickerFilePath,
+                    false,
+                    width: 128,
+                    height: 128,
+                    x: 0.5,
+                    y: 0.5
+                ),
+                // attachmentUrl: "https://example.com"
+                attachmentUrl: "smaplo://app/users/CGsTJIzlyscRdMPzgkLHdCrsdVQ2"
+            );
 
-          print('INFO (build) > result: ${result.toString()}');
-        },
-        child: Icon(Icons.camera),
+            print('INFO (build) > result: ${result.toString()}');
+          },
+          child: Icon(Icons.camera),
+        ),
       ),
     );
   }
@@ -308,7 +310,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void showMessage(String message) {
-    _scaffoldKey
+    _scaffoldMessengerKey
         ?.currentState
         ?.showSnackBar(SnackBar(content: Text(message)));
   }

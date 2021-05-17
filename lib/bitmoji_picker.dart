@@ -55,12 +55,8 @@ class _BitmojiPickerState extends State<BitmojiPicker> {
         '$defaultTargetPlatform is not yet supported by the snapchat plugin');
   }
 
-
   void _onPlatformViewCreated(int id) {
-    if (widget.onBitmojiPickerCreated == null) {
-      return;
-    }
-    widget.onBitmojiPickerCreated(new BitmojiPickerController._(id));
+    widget.onBitmojiPickerCreated?.call(BitmojiPickerController._(id));
   }
 }
 

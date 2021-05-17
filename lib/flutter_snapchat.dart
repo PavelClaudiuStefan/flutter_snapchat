@@ -216,7 +216,7 @@ class SnapchatSticker {
     this.rotation,
   }) {
     assert(imageFilePath != null && isAnimated != null);
-
+    
     if (width != null) {
       assert(width >= 0.0 && width <= 300.0);
     }
