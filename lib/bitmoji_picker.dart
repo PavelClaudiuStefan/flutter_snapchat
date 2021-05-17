@@ -12,15 +12,15 @@ typedef void BitmojiPickerCreatedCallback(BitmojiPickerController controller);
 class BitmojiPicker extends StatefulWidget {
 
   BitmojiPicker({
-    Key key,
+    Key? key,
     this.creationParams,
     this.onBitmojiPickerCreated,
   }) : super(key: key) {
     assert (Platform.isIOS);
   }
 
-  final Map<String, dynamic> creationParams;
-  final BitmojiPickerCreatedCallback onBitmojiPickerCreated;
+  final Map<String, dynamic>? creationParams;
+  final BitmojiPickerCreatedCallback? onBitmojiPickerCreated;
 
   @override
   _BitmojiPickerState createState() => _BitmojiPickerState();

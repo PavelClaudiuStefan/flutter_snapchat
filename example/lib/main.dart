@@ -67,7 +67,7 @@ class _MyAppState extends State<MyApp> {
       });
 
     } catch(e) {
-      print('ERROR (initSnapchatUser) > error: ${e.toString()}');
+      print('main - ERROR (initSnapchatUser) > error: ${e.toString()}');
       setState(() {
         _snapchatUser = null;
         _isLoading = false;

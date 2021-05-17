@@ -7,10 +7,10 @@ import 'package:flutter/services.dart';
 class FlutterSnapchat {
   static const MethodChannel _channel = const MethodChannel('flutter_snapchat');
 
-  Stream<SnapchatUser> onAuthStateChanged;
+  Stream<SnapchatUser>? onAuthStateChanged;
 
-  void Function(SnapchatUser user) onLogin;
-  void Function() onLogout;
+  void Function(SnapchatUser? user)? onLogin;
+  void Function()? onLogout;
 
   FlutterSnapchat({this.onLogin, this.onLogout}) {
     this.currentUser.then((user) {
@@ -20,12 +20,12 @@ class FlutterSnapchat {
     });
   }
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
+  static Future<String?> get platformVersion async {
+    final String? version = await _channel.invokeMethod('getPlatformVersion');
     return version;
   }
 
-  Future<bool> isUserLoggedIn() async {
+  Future<bool?> isUserLoggedIn() async {
     final isUserLoggedIn = await _channel.invokeMethod('isUserLoggedIn');
 
     return isUserLoggedIn;
@@ -33,7 +33,7 @@ class FlutterSnapchat {
 
   /// Opens Snapchat oauth screen in app (if installed) or in a browser
   /// Returns snapchat user or throws error if it fails
-  Future<SnapchatUser> login() async {
+  Future<SnapchatUser?> login() async {
     await _channel.invokeMethod('login');
 
     final currentUser = await this.currentUser;
@@ -51,11 +51,11 @@ class FlutterSnapchat {
 
   /// Returns [SnapchatUser]
   /// Calling current user after logging out will result in an error
-  Future<SnapchatUser> get currentUser async {
+  Future<SnapchatUser?> get currentUser async {
     try {
-      final List<dynamic> userDetails = await _channel.invokeMethod('getUser');
+      final List<dynamic> userDetails = await (_channel.invokeMethod('getUser'));
 
-      print('INFO (currentUser) > userDetails: ${userDetails.toString()}');
+      print('main - INFO (currentUser) > userDetails: ${userDetails.toString()}');
 
       return new SnapchatUser(
           userDetails[0] as String,
@@ -73,13 +73,13 @@ class FlutterSnapchat {
   /// Share photo/video/live camera content
   /// [mediaFilePath] needs to be the path of a platform (android, iOS) specific file. Flutter asset path is not supported
   Future share(SnapchatMediaType mediaType, {
-        String mediaFilePath,
-        SnapchatSticker sticker,
-        String caption,
-        String attachmentUrl
+        String? mediaFilePath,
+        SnapchatSticker? sticker,
+        String? caption,
+        String? attachmentUrl
   }) async {
 
-    assert(mediaType != null && (caption != null ? caption.length <= 250 : true));
+    assert(caption != null ? caption.length <= 250 : true);
 
     if (mediaType != SnapchatMediaType.none) assert(mediaFilePath != null);
 
@@ -99,8 +99,8 @@ class FlutterSnapchat {
   }
 
   /// Returns true if the Snapchat app is installed
-  Future<bool> get isSnapchatInstalled async {
-    bool isInstalled;
+  Future<bool?> get isSnapchatInstalled async {
+    bool? isInstalled;
     isInstalled = await _channel.invokeMethod('isInstalled');
     return isInstalled;
   }
@@ -112,12 +112,12 @@ class FlutterSnapchat {
   ///   - user closing it manually
   ///   - [closeBitmojiPicker] getting called
   Future<void> showBitmojiPicker({
-    String friendUserId,
+    String? friendUserId,
     bool isDarkTheme = false,
     bool hasSearchBar = true,
     bool hasSearchPills = true,
-    void Function(String bitmojiUrl) onBitmojiSelected,
-    void Function(dynamic bitmojiUrl) onError,
+    void Function(String? bitmojiUrl)? onBitmojiSelected,
+    void Function(dynamic bitmojiUrl)? onError,
   }) async {
     try {
       final result = await _channel.invokeMethod('showBitmojiPicker',
@@ -197,11 +197,11 @@ class SnapchatSticker {
   /// True if sticker is animated
   bool isAnimated;
 
-  double width;
-  double height;
-  double x;
-  double y;
-  double rotation;
+  double? width;
+  double? height;
+  double? x;
+  double? y;
+  double? rotation;
 
   /// [width] valid range is from 0.0 to 300.0
   /// [height] valid range is from 0.0 to 300.0
@@ -215,26 +215,25 @@ class SnapchatSticker {
     this.y,
     this.rotation,
   }) {
-    assert(imageFilePath != null && isAnimated != null);
     
     if (width != null) {
-      assert(width >= 0.0 && width <= 300.0);
+      assert(width! >= 0.0 && width! <= 300.0);
     }
 
     if (height != null) {
-      assert(height >= 0.0 && height <= 300.0);
+      assert(height! >= 0.0 && height! <= 300.0);
     }
 
     if (x != null) {
-      assert(x >= 0.0 && x <= 1.0);
+      assert(x! >= 0.0 && x! <= 1.0);
     }
 
     if (y != null) {
-      assert(y >= 0.0 && y <= 1.0);
+      assert(y! >= 0.0 && y! <= 1.0);
     }
 
     if (rotation != null) {
-      assert(rotation >= 0.0 && rotation <= 360.0);
+      assert(rotation! >= 0.0 && rotation! <= 360.0);
     }
   }
 
