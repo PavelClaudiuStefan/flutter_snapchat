@@ -1,7 +1,7 @@
 name: flutter_snapchat
 description: A snapchat flutter plugin
-version: 0.0.1
-author:
+version: 0.1.0
+author: Pavel Claudiu Stefan
 homepage:
 
 environment:
