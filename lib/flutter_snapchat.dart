@@ -58,9 +58,9 @@ class FlutterSnapchat {
       print('main - INFO (currentUser) > userDetails: ${userDetails.toString()}');
 
       return new SnapchatUser(
-          userDetails[0] as String,
-          userDetails[1] as String,
-          userDetails[2] as String
+          userDetails[0],
+          userDetails[1],
+          userDetails[2]
       );
     } on PlatformException catch (e) {
       if (e.code == "GetUserError" || e.code == "NetworkGetUserError")
@@ -178,7 +178,7 @@ class SnapchatUser {
   final String displayName;
 
   /// Snapchat user's Bitmoji url
-  final String bitmojiUrl;
+  final String? bitmojiUrl;
 
   SnapchatUser(this.externalId, this.displayName, this.bitmojiUrl);
 

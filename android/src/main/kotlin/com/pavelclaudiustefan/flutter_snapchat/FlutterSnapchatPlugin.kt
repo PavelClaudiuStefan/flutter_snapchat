@@ -161,7 +161,9 @@ class FlutterSnapchatPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, Pl
         val res: MutableList<String> = ArrayList()
         res.add(meData.externalId)
         res.add(meData.displayName)
-        res.add(meData.bitmojiData.selfie)
+        if (meData.bitmojiData.selfie != null) {
+          res.add(meData.bitmojiData.selfie)
+        }
 //        if (meData.profileLink != null) {
 //          res.add(meData.profileLink)
 //        }
