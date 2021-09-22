@@ -15,12 +15,44 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.pavelclaudiustefan.flutterSnapchatExample</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fluttersnapchatexample</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>snapchat</string>
+		<string>bitmoji-sdk</string>
+		<string>itms-apps</string>
+		<string>fluttersnapchatexample</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>SCSDKClientId</key>
+	<string>9a412ba9-41b3-4937-9a1c-de681d62f4f9</string>
+	<key>SCSDKRedirectUrl</key>
+	<string>fluttersnapchatexample://oauth/snapchat</string>
+	<key>SCSDKScopes</key>
+	<array>
+		<string>https://auth.snapchat.com/oauth2/api/user.external_id</string>
+		<string>https://auth.snapchat.com/oauth2/api/user.display_name</string>
+		<string>https://auth.snapchat.com/oauth2/api/user.bitmoji.avatar</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -41,37 +73,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>com.pavelclaudiustefan.flutterSnapchatExample</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>fluttersnapchatexample</string>
-            </array>
-        </dict>
-    </array>
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>snapchat</string>
-        <string>bitmoji-sdk</string>
-        <string>itms-apps</string>
-        <string>fluttersnapchatexample</string>
-    </array>
-    <key>SCSDKClientId</key>
-    <string>9a412ba9-41b3-4937-9a1c-de681d62f4f9</string>
-    <key>SCSDKRedirectUrl</key>
-    <string>fluttersnapchatexample://oauth/snapchat</string>
-    <key>SCSDKScopes</key>
-    <array>
-        <string>https://auth.snapchat.com/oauth2/api/user.external_id</string>
-        <string>https://auth.snapchat.com/oauth2/api/user.display_name</string>
-        <string>https://auth.snapchat.com/oauth2/api/user.bitmoji.avatar</string>
-    </array>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
-    <key>UIFileSharingEnabled</key>
-    <true/>
 </dict>
 </plist>
