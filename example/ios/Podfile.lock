@@ -2,7 +2,7 @@ PODS:
   - Flutter (1.0.0)
   - flutter_snapchat (1.0.0):
     - Flutter
-    - SnapSDK (= 1.11.0)
+    - SnapSDK
   - path_provider (0.0.1):
     - Flutter
   - PINCache (3.0.3):
@@ -52,7 +52,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
-  flutter_snapchat: 687b90f99511975e96b8abcd8bd37d8995eb62f8
+  flutter_snapchat: 0d6ad144b4a66e65586023453334745a488910ab
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
   PINCache: 7a8fc1a691173d21dbddbf86cd515de6efa55086
   PINOperation: 00c935935f1e8cf0d1e2d6b542e75b88fc3e5e20

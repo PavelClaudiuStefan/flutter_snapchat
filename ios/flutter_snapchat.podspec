@@ -21,6 +21,6 @@ A snapchat flutter plugin
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
 
-  # s.dependency 'SnapSDK'
-  s.dependency 'SnapSDK', '1.11.0'
+  s.dependency 'SnapSDK'
+  # s.dependency 'SnapSDK', '1.11.0'
 end
